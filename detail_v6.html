@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>車両詳細</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: "Helvetica Neue", Arial, sans-serif; background: #f3f4f6; color: #333; line-height: 1.6; }
+        a { text-decoration: none; color: inherit; }
+        header { background: #fff; padding: 20px 0; text-align: center; border-bottom: 1px solid #e5e7eb; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+        .breadcrumb { font-size: 14px; color: #6b7280; margin-bottom: 20px; }
+        .top-section { display: flex; flex-direction: column; gap: 40px; background: #fff; padding: 30px; border-radius: 8px; margin-bottom: 40px; }
+        @media (min-width: 900px) { .top-section { flex-direction: row; } .gallery-area { width: 60%; } .info-area { width: 40%; } }
+        .gallery-tabs { display: flex; gap: 10px; margin-bottom: 10px; }
+        .gallery-tab { padding: 8px 16px; background: #f3f4f6; border: 1px solid #e5e7eb; cursor: pointer; }
+        .gallery-tab.active { background: #333; color: #fff; border-color: #333; }
+        .main-image { width: 100%; aspect-ratio: 4/3; background: #eee; margin-bottom: 10px; border-radius: 4px; overflow: hidden; }
+        .main-image img { width: 100%; height: 100%; object-fit: cover; }
+        .thumbnail-container { display: none; grid-template-columns: repeat(auto-fill, minmax(70px, 1fr)); gap: 8px; }
+        .thumbnail-container.active { display: grid; }
+        .thumb { aspect-ratio: 4/3; cursor: pointer; border: 2px solid transparent; background: #eee; }
+        .thumb img { width: 100%; height: 100%; object-fit: cover; }
+        .thumb.selected { border-color: #c00; }
+        .car-title { font-size: 26px; font-weight: bold; margin-bottom: 10px; }
+        .price-box { background: #fff1f2; padding: 25px; border-left: 6px solid #e11d48; border-radius: 4px; margin-bottom: 30px; }
+        .price-value { font-size: 42px; font-weight: bold; color: #e11d48; line-height: 1; }
+        .btn-contact { display: block; background: #e11d48; color: #fff; text-align: center; padding: 18px; font-weight: bold; border-radius: 6px; }
+        .details-section { background: #fff; border-radius: 8px; padding: 10px 30px 40px; }
+        .accordion-header { width: 100%; padding: 20px 0; background: none; border: none; text-align: left; font-size: 18px; font-weight: bold; display: flex; justify-content: space-between; cursor: pointer; border-bottom: 1px solid #eee; }
+        .accordion-content { display: none; padding: 20px 0; }
+        .accordion-content.active { display: block; }
+        .equip-matrix { width: 100%; border-collapse: collapse; }
+        .equip-matrix th { background: #f9fafb; text-align: left; padding: 10px; width: 30%; }
+        .equip-matrix td { padding: 10px; border-bottom: 1px solid #eee; }
+        .status-yes { color: #e11d48; font-weight: bold; } .status-no { color: #ccc; }
+    </style>
+</head>
+<body>
+<header><h1>STOCK CAR LIST</h1></header>
+<div class="container">
+    <nav class="breadcrumb"><a href="stock_list.html">在庫一覧</a> &gt; <span>ポルシェ カイエン GTS</span></nav>
+    <div class="top-section">
+        <div class="gallery-area">
+            <div class="gallery-tabs"><button class="gallery-tab active" onclick="switchTab('ext')">外装</button></div>
+            <div class="main-image"><img id="mainImg" src="https://images.unsplash.com/photo-1503376763036-066120622c74?w=800"></div>
+            <div id="ext-thumbs" class="thumbnail-container active">
+                <div class="thumb selected" onclick="changeImage(this,'https://images.unsplash.com/photo-1503376763036-066120622c74?w=800')"><img src="https://images.unsplash.com/photo-1503376763036-066120622c74?w=200"></div>
+                <div class="thumb" onclick="changeImage(this,'https://images.unsplash.com/photo-1614162692292-7ac56d7f7f1e?w=800')"><img src="https://images.unsplash.com/photo-1614162692292-7ac56d7f7f1e?w=200"></div>
+            </div>
+        </div>
+        <div class="info-area">
+            <h1 class="car-title">ポルシェ カイエン GTS</h1>
+            <div class="price-box"><span class="price-value">¥2,980,000</span></div>
+            <a href="#" class="btn-contact">お問い合わせ</a>
+        </div>
+    </div>
+    <div class="details-section">
+        <div class="accordion-item">
+            <button class="accordion-header" onclick="toggleAccordion(this)">基本仕様 <span>＋</span></button>
+            <div class="accordion-content active">
+                <table class="equip-matrix">
+                    <tr><th>年式</th><td>2008年</td><th>走行距離</th><td>58,000 km</td></tr>
+                    <tr><th>車検</th><td>R7年12月</td><th>修復歴</th><td>なし</td></tr>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    function changeImage(el, src) { document.querySelectorAll('.thumb').forEach(t => t.classList.remove('selected')); el.classList.add('selected'); document.getElementById('mainImg').src = src; }
+    function switchTab(type) { /* 省略: タブ切り替えロジック */ }
+    function toggleAccordion(btn) { btn.nextElementSibling.classList.toggle('active'); }
+</script>
+</body>
+</html>

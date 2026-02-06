@@ -1,0 +1,7 @@
+# venvフォルダを無視する
+venv/
+
+# Pythonの一時ファイルを無視する
+__pycache__/
+*.py[cod]
+db.sqlite3

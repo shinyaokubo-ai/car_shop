@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>在庫車両登録 | 管理画面</title>
+    <style>
+        /* --- 共通スタイル --- */
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        
+        body {
+            font-family: "Helvetica Neue", Arial, sans-serif;
+            background-color: #f4f5f7;
+            color: #333;
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* サイドバー */
+        .sidebar {
+            width: 240px;
+            background-color: #1e293b;
+            color: #fff;
+            display: flex;
+            flex-direction: column;
+            padding: 20px 0;
+            flex-shrink: 0;
+        }
+        .sidebar-logo {
+            font-size: 18px; font-weight: bold; text-align: center;
+            margin-bottom: 40px; letter-spacing: 1px; border-bottom: 1px solid #334155; padding-bottom: 20px;
+        }
+        .menu-item {
+            padding: 15px 25px; color: #cbd5e1; text-decoration: none; display: block;
+            transition: 0.3s; border-left: 3px solid transparent;
+        }
+        .menu-item:hover, .menu-item.active {
+            background-color: #334155; color: #fff; border-left-color: #cc0000;
+        }
+
+        /* メインエリア */
+        .main-content { flex-grow: 1; padding: 40px; overflow-y: auto; }
+        .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+        .page-title { font-size: 24px; font-weight: bold; color: #1e293b; }
+
+        /* フォームカード */
+        .form-card {
+            background: #fff; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            padding: 30px; margin-bottom: 30px;
+        }
+        .form-section-title {
+            font-size: 16px; font-weight: bold; color: #64748b;
+            border-bottom: 2px solid #f1f5f9; padding-bottom: 10px; margin-bottom: 20px;
+        }
+
+        /* グリッドレイアウト */
+        .form-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
+        /* 4列グリッド（スペック用） */
+        .form-grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; }
+        
+        .form-group { margin-bottom: 20px; }
+        .form-group.full-width { grid-column: span 2; }
+
+        label { display: block; font-size: 12px; font-weight: bold; margin-bottom: 6px; color: #475569; }
+        input[type="text"], input[type="number"], select, textarea {
+            width: 100%; padding: 8px 10px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 13px;
+        }
+        textarea { height: 100px; resize: vertical; }
+
+        /* スイッチ（SOLD OUTなど） */
+        .toggle-switch { display: flex; align-items: center; gap: 10px; cursor: pointer; margin-top: 5px;}
+        .toggle-input { display: none; }
+        .toggle-slider {
+            width: 40px; height: 20px; background: #cbd5e1; border-radius: 20px; position: relative; transition: 0.3s;
+        }
+        .toggle-slider::before {
+            content: ""; width: 16px; height: 16px; background: #fff; border-radius: 50%;
+            position: absolute; top: 2px; left: 2px; transition: 0.3s;
+        }
+        .toggle-input:checked + .toggle-slider { background: #cc0000; }
+        .toggle-input:checked + .toggle-slider::before { transform: translateX(20px); }
+
+        /* チェックボックスグループ */
+        .checkbox-group { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 15px; }
+        .checkbox-item { display: flex; align-items: center; font-size: 13px; gap: 6px; cursor: pointer; }
+        .checkbox-item input { accent-color: #cc0000; }
+
+        /* 画像アップロード */
+        .image-upload-area {
+            border: 2px dashed #cbd5e1; border-radius: 6px; padding: 40px;
+            text-align: center; color: #64748b; cursor: pointer; background: #f8fafc;
+        }
+        .image-upload-area:hover { border-color: #cc0000; background: #fff5f5; }
+
+        /* ボタン */
+        .action-buttons { display: flex; justify-content: flex-end; gap: 15px; margin-top: 20px; }
+        .btn { padding: 12px 30px; border-radius: 4px; font-weight: bold; cursor: pointer; border: none; font-size: 14px; }
+        .btn-secondary { background: #e2e8f0; color: #475569; }
+        .btn-primary { background: #cc0000; color: #fff; }
+        .btn-primary:hover { background: #b91c1c; }
+
+    </style>
+</head>
+<body>
+
+    <aside class="sidebar">
+        <div class="sidebar-logo">Admin Panel</div>
+        <nav>
+            <a href="admin_list.html" class="menu-item">在庫一覧</a>
+            <a href="#" class="menu-item active">在庫車両登録</a>
+        </nav>
+    </aside>
+
+    <main class="main-content">
+        <div class="page-header">
+            <h1 class="page-title">新規車両登録</h1>
+        </div>
+
+        <div class="form-card">
+            <div class="form-section-title">基本情報</div>
+            <div class="form-grid">
+                <div class="form-group full-width">
+                    <label>車種名 (タイトル)</label>
+                    <input type="text" placeholder="例：ポルシェ カイエン GTS">
+                </div>
+                
+                <div class="form-group">
+                    <label>車両本体価格 (税込)</label>
+                    <input type="number" placeholder="例：16800000">
+                </div>
+                <div class="form-group">
+                    <label>諸費用</label>
+                    <input type="number" placeholder="例：960000">
+                </div>
+                
+                <div class="form-group">
+                    <label>支払総額 (税込)</label>
+                    <input type="number" placeholder="例：17760000">
+                </div>
+                
+                <div class="form-group">
+                    <label>管理番号 (SKU)</label>
+                    <input type="text" placeholder="例：C-001">
+                </div>
+                <div class="form-group full-width">
+                    <label>ステータス</label>
+                    <div style="display:flex; gap:15px;">
+                        <label class="toggle-switch">
+                            <input type="checkbox" class="toggle-input" checked>
+                            <span class="toggle-slider"></span>
+                            <span>新規入庫</span>
+                        </label>
+                        <label class="toggle-switch">
+                            <input type="checkbox" class="toggle-input">
+                            <span class="toggle-slider"></span>
+                            <span>SOLD OUT</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-card">
+            <div class="form-section-title">基本仕様</div>
+            <div class="form-grid-4">
+                <div class="form-group"><label>初年度登録</label><input type="text" placeholder="例：令和5年3月"></div>
+                <div class="form-group"><label>走行距離</label><input type="text" placeholder="例：29700km"></div>
+                <div class="form-group"><label>車検</label><input type="text" placeholder="例：令和8年3月"></div>
+                <div class="form-group"><label>修復歴</label><select><option>なし</option><option>あり</option></select></div>
+
+                <div class="form-group"><label>ボディカラー</label><input type="text" placeholder="例：クォーツァイトグレー"></div>
+                <div class="form-group"><label>内装色</label><input type="text" placeholder="例：ブラック"></div>
+                <div class="form-group"><label>ハンドル</label><select><option>右</option><option>左</option></select></div>
+                <div class="form-group"><label>輸入経路</label><select><option>ディーラー</option><option>並行</option></select></div>
+
+                <div class="form-group"><label>全長 (cm)</label><input type="text" placeholder="例：494"></div>
+                <div class="form-group"><label>全幅 (cm)</label><input type="text" placeholder="例：199"></div>
+                <div class="form-group"><label>全高 (cm)</label><input type="text" placeholder="例：164"></div>
+                <div class="form-group"><label>生産国</label><input type="text" placeholder="例：ドイツ"></div>
+
+                <div class="form-group"><label>生産期間</label><input type="text" placeholder="例：22年12月～23年03月"></div>
+                <div class="form-group"><label>新車時車両価格</label><input type="text" placeholder="例：1776万円"></div>
+                <div class="form-group"><label>型式</label><input type="text" placeholder="例：3BA-E3PI"></div>
+                <div class="form-group"><label>車体重量 (kg)</label><input type="text" placeholder="例：2180"></div>
+
+                <div class="form-group" style="grid-column: span 2;"><label>全長x全幅x全高 (mm)</label><input type="text" placeholder="例：4925x1985x1675"></div>
+                <div class="form-group"><label>ホイールベース (mm)</label><input type="text" placeholder="例：2895"></div>
+                <div class="form-group"><label>トレッド前/後 (mm)</label><input type="text" placeholder="例：1682/1665"></div>
+
+                <div class="form-group"><label>ドア数</label><input type="text" placeholder="例：5"></div>
+                <div class="form-group"><label>乗車定員</label><input type="text" placeholder="例：5名"></div>
+                <div class="form-group"><label>シート列数</label><input type="text" placeholder="例：2"></div>
+                <div class="form-group"><label>最小回転半径 (m)</label><input type="text" placeholder="例：5.7"></div>
+
+                <div class="form-group"><label>駆動方式</label><input type="text" placeholder="例：4WD"></div>
+                <div class="form-group"><label>ミッション</label><input type="text" placeholder="例：8AT"></div>
+                <div class="form-group"><label>ミッション位置</label><input type="text" placeholder="例：フロア"></div>
+                
+                <div class="form-group"><label>AI-SHIFT</label><select><option>○</option><option>－</option></select></div>
+                <div class="form-group"><label>マニュアルモード</label><select><option>○</option><option>－</option></select></div>
+            </div>
+        </div>
+
+        <div class="form-card">
+            <div class="form-section-title">商品情報 (コメント)</div>
+            <textarea placeholder="車両の状態やアピールポイントなどの詳細コメントを入力してください..."></textarea>
+        </div>
+
+        <div class="form-card">
+            <div class="form-section-title">車両画像</div>
+            <div class="image-upload-area">
+                <p>クリックして画像を選択</p>
+            </div>
+        </div>
+
+        <div class="form-card">
+            <div class="form-section-title">装備詳細 (自由入力)</div>
+            <div class="form-group"><label>標準装備</label><textarea style="height:80px;" placeholder="主な標準装備を入力..."></textarea></div>
+            <div class="form-group"><label>オプション装備</label><textarea style="height:80px;" placeholder="オプション装備を入力..."></textarea></div>
+            <div class="form-group"><label>社外装備 (カスタム)</label><textarea style="height:80px;" placeholder="社外ナビ、ドラレコ等..."></textarea></div>
+        </div>
+
+        <div class="form-card">
+            <div class="form-section-title">カテゴリ別装備 (チェック)</div>
+            <label>安全装備</label>
+            <div class="checkbox-group">
+                <label class="checkbox-item"><input type="checkbox"> ABS</label>
+                <label class="checkbox-item"><input type="checkbox"> ESC</label>
+                <label class="checkbox-item"><input type="checkbox"> 衝突被害軽減B</label>
+                <label class="checkbox-item"><input type="checkbox"> ACC</label>
+                <label class="checkbox-item"><input type="checkbox"> 全周囲カメラ</label>
+            </div>
+            <hr style="border:0; border-top:1px dashed #eee; margin:15px 0;">
+            <label>外装・内装</label>
+            <div class="checkbox-group">
+                <label class="checkbox-item"><input type="checkbox"> LEDライト</label>
+                <label class="checkbox-item"><input type="checkbox"> 電動リアゲート</label>
+                <label class="checkbox-item"><input type="checkbox"> サンルーフ</label>
+                <label class="checkbox-item"><input type="checkbox"> 本革シート</label>
+                <label class="checkbox-item"><input type="checkbox"> ナビ・TV</label>
+                <label class="checkbox-item"><input type="checkbox"> ETC</label>
+            </div>
+        </div>
+
+        <div class="form-card">
+            <div class="form-section-title">車歴・書類</div>
+            <div class="checkbox-group">
+                <label class="checkbox-item"><input type="checkbox"> 保証書</label>
+                <label class="checkbox-item"><input type="checkbox"> 取説</label>
+                <label class="checkbox-item"><input type="checkbox"> 記録簿</label>
+                <label class="checkbox-item"><input type="checkbox"> スペアキー</label>
+                <label class="checkbox-item"><input type="checkbox"> 禁煙車</label>
+            </div>
+            <div class="form-group" style="margin-top:10px;">
+                <label>備考</label>
+                <input type="text" placeholder="書類に関する特記事項...">
+            </div>
+        </div>
+
+        <div class="action-buttons">
+            <button class="btn btn-secondary">キャンセル</button>
+            <button class="btn btn-primary" onclick="alert('登録しました')">登録する</button>
+        </div>
+
+    </main>
+</body>
+</html>
