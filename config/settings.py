@@ -64,6 +64,12 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                # ▼ ここに追加！（staticfiles より上に書くのがコツです）
+                'cloudinary_storage',
+                'django.contrib.staticfiles',
+                # ▼ ここに追加！
+                'cloudinary',
+                'cars',
             ],
         },
     },
@@ -151,3 +157,14 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 import os
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
+
+# Cloudinaryの設定（環境変数から読み込むようにします）
+CLOUDINARY_STORAGE = {
+    'CLOUD_NAME': os.environ.get('CLOUD_NAME'),
+    'API_KEY': os.environ.get('CLOUD_API_KEY'),
+    'API_SECRET': os.environ.get('CLOUD_API_SECRET'),
+}
+
+# 画像の保存先をCloudinaryに変更する魔法の1行
+DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
