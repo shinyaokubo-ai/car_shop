@@ -20,6 +20,7 @@ INSTALLED_APPS = [
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
+    'django.contrib.humanize',  # ← ここにこの1行を追加！
     # Cloudinary用（staticfilesより上に書く）
     'cloudinary_storage',
     'django.contrib.staticfiles',
