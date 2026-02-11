@@ -167,7 +167,7 @@ CLOUDINARY_STORAGE = {
     'API_SECRET': os.environ.get('CLOUD_API_SECRET'),
 }
 
-# 画像の保存先をCloudinaryにする最新の書き方
+# 画像とデザインファイルの保存先を正しく指定（完全な住所）
 STORAGES = {
     "default": {
         "BACKEND": "cloudinary_storage.storage.MediaCloudinaryStorage",
