@@ -167,5 +167,12 @@ CLOUDINARY_STORAGE = {
     'API_SECRET': os.environ.get('CLOUD_API_SECRET'),
 }
 
-# 画像の保存先をCloudinaryに変更する魔法の1行
-DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
+# 画像の保存先をCloudinaryにする最新の書き方
+STORAGES = {
+    "default": {
+        "BACKEND": "cloudinary_storage.storage.MediaCloudinaryStorage",
+    },
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+    },
+}
