@@ -1,3 +1,4 @@
+{% load humanize %}
 {% extends 'base.html' %}
 {% load humanize %}
 
@@ -33,12 +34,12 @@
                     <h5 class="card-title fw-bold">{{ car.title }}</h5>
                     
                     <div class="mb-3 d-flex gap-2">
-                        <span class="badge bg-light text-dark border">
-                            <i class="bi bi-calendar"></i> {{ car.registration_year }}
-                        </span>
-                        <span class="badge bg-light text-dark border">
-                            <i class="bi bi-speedometer2"></i> {{ car.mileage }}
-                        </span>
+                      <span class="badge bg-light text-dark border" style="font-size: 1.1rem; padding: 0.5em 0.8em;">
+                        <i class="bi bi-calendar"></i> {{ car.registration_year }}
+                      </span>
+                      <span class="badge bg-light text-dark border" style="font-size: 1.1rem; padding: 0.5em 0.8em;">
+                        <i class="bi bi-speedometer2"></i> {{ car.mileage }}
+                      </span>
                     </div>
 
                     <hr>
@@ -49,7 +50,7 @@
                                 <span class="text-danger fw-bold fs-5">売約済み</span>
                             {% else %}
                                 <span class="text-muted small">支払総額</span><br>
-                                <span class="text-danger fw-bold fs-4">¥{{ car.price_total }}</span>
+                                <span class="text-danger fw-bold fs-4">¥{{ car.total_price|intcomma }}</span>
                             {% endif %}
                         </div>
                         <a href="{% url 'car_detail' car.pk %}" class="btn btn-outline-dark stretched-link">詳細を見る</a>

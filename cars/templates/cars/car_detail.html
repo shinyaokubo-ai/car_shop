@@ -1,5 +1,6 @@
-{% extends 'base.html' %}
 {% load humanize %}
+{% extends 'base.html' %}
+
 
 {% block content %}
 <style>
@@ -97,8 +98,9 @@
                     <div class="d-flex align-items-baseline text-danger">
                         <span class="display-4 fw-bold">¥{{ car.price_total|intcomma }}</span>
                     </div>
-                    <p class="mb-0 small text-muted border-top border-danger pt-2 mt-2" style="border-color: #ffc9c9 !important;">
-                        (車両本体: ¥{{ car.price_vehicle|intcomma }} + 諸費用: ¥{{ car.price_misc|intcomma }})
+                    <p class="mb-0 text-muted border-top border-danger pt-2 mt-2" 
+                     style="border-color: #ffc9c9 !important; font-size: 1.2rem; font-weight: 500;">
+                          (車両本体: ¥{{ car.price_vehicle|intcomma }} + 諸費用: ¥{{ car.price_misc|intcomma }})
                     </p>
                 </div>
             {% endif %}
