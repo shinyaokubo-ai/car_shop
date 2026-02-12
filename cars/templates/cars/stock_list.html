@@ -3,58 +3,21 @@
 
 {% block content %}
 <style>
-    /* 【基本：スマホの設定】 3列でコンパクトに */
-    .car-card-img {
-        height: 120px;
-        object-fit: cover;
-    }
-    .car-title {
-        font-size: 0.85rem;
-    }
-    .car-badge {
-        font-size: 0.7rem;
-        padding: 0.3em;
-    }
-    .price-label {
-        font-size: 0.6rem;
-        margin-bottom: 0;
-    }
-    .price-text {
-        font-size: 0.95rem; /* スマホでも少しだけ大きく */
-    }
+    /* 【スマホ(基本)設定】 3列でコンパクトに */
+    .car-card-img { height: 110px; object-fit: cover; }
+    .car-title { font-size: 0.8rem; height: 2.4em; overflow: hidden; margin-bottom: 0.5rem !important; }
+    .car-badge { font-size: 0.65rem; padding: 0.2em; display: block; margin-bottom: 2px; }
+    .price-label { font-size: 0.6rem; margin-bottom: 0; }
+    .price-text { font-size: 0.95rem; line-height: 1.2; }
 
     /* 【PC版の設定：画面幅が768px以上】 */
     @media (min-width: 768px) {
-        .car-card-img {
-            height: 250px;
-        }
-        .car-title {
-            font-size: 1.3rem;
-            margin-bottom: 0.75rem !important;
-        }
-        .car-badge {
-            font-size: 1.05rem;
-            padding: 0.5em 0.8em;
-            display: inline-block !important;
-            width: auto !important;
-        }
-        /* ★金額ラベルを少し太く */
-        .price-label {
-            font-size: 0.9rem;
-            font-weight: bold;
-            color: #666;
-        }
-        /* ★金額を圧倒的に大きく（以前の1.5rem → 1.8rem以上に拡大） */
-        .price-text {
-            font-size: 2.1rem; 
-            line-height: 1.2;
-        }
-        /* ★詳細ボタンを横幅いっぱいにせず、少しスマートに */
-        .detail-btn {
-            font-size: 1rem;
-            padding: 0.5rem 1.5rem !important;
-            width: auto !important;
-        }
+        .car-card-img { height: 250px; }
+        .car-title { font-size: 1.3rem; height: auto; font-weight: bold; }
+        .car-badge { font-size: 1.05rem; padding: 0.5em 0.8em; display: inline-block !important; width: auto !important; margin-right: 5px; }
+        .price-label { font-size: 0.9rem; font-weight: bold; color: #666; }
+        .price-text { font-size: 2.1rem; }
+        .detail-btn { font-size: 1rem; padding: 0.5rem 1.5rem !important; width: auto !important; }
     }
 </style>
 
@@ -69,9 +32,7 @@
                     {% if car.get_main_image_url %}
                         <img src="{{ car.get_main_image_url }}" class="card-img-top car-card-img" alt="{{ car.title }}">
                     {% else %}
-                        <div class="bg-secondary text-white d-flex align-items-center justify-content-center car-card-img">
-                            No Image
-                        </div>
+                        <div class="bg-secondary text-white d-flex align-items-center justify-content-center car-card-img">No Image</div>
                     {% endif %}
                     
                     {% if car.is_sold_out %}
@@ -82,19 +43,19 @@
                 </div>
 
                 <div class="card-body p-2 p-md-3 d-flex flex-column">
-                    <h5 class="card-title fw-bold text-truncate car-title">{{ car.title }}</h5>
+                    <h5 class="car-title fw-bold text-truncate">{{ car.title }}</h5>
                     
-                    <div class="mb-3">
-                      <span class="badge bg-light text-dark border d-block d-md-inline-block mb-1 car-badge">
-                        <i class="bi bi-calendar d-none d-md-inline"></i> {{ car.registration_year }}
+                    <div class="mb-2 mb-md-3">
+                      <span class="badge bg-light text-dark border car-badge">
+                        {{ car.registration_year }}
                       </span>
-                      <span class="badge bg-light text-dark border d-block d-md-inline-block car-badge">
-                        <i class="bi bi-speedometer2 d-none d-md-inline"></i> {{ car.mileage }}
+                      <span class="badge bg-light text-dark border car-badge">
+                        {{ car.mileage }}
                       </span>
                     </div>
 
                     <div class="mt-auto pt-2 border-top">
-                        <p class="price-label mb-0">支払総額（税込）</p>
+                        <p class="price-label">支払総額（税込）</p>
                         <div class="d-md-flex justify-content-between align-items-end">
                             <div class="text-danger fw-bold price-text">
                                 {% if car.is_sold_out %}
@@ -103,7 +64,7 @@
                                     <span style="font-size: 0.7em;">¥</span>{{ car.price_total|intcomma }}
                                 {% endif %}
                             </div>
-                            <a href="{% url 'car_detail' car.pk %}" class="btn btn-outline-dark btn-sm detail-btn mt-2 mt-md-0">詳細</a>
+                            <a href="{% url 'car_detail' car.pk %}" class="btn btn-outline-dark btn-sm detail-btn mt-2 mt-md-0 stretched-link">詳細</a>
                         </div>
                     </div>
                 </div>
