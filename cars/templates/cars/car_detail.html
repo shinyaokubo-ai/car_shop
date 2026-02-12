@@ -6,7 +6,7 @@
     <nav aria-label="breadcrumb" class="mb-4">
         <ol class="breadcrumb">
             <li class="breadcrumb-item"><a href="{% url 'stock_list' %}" class="text-decoration-none text-dark">在庫一覧</a></li>
-            <li class="breadcrumb-item active" aria-current="page">{{ car.title }}</li>
+            <li class="breadcrumb-item active">{{ car.title }}</li>
         </ol>
     </nav>
 
@@ -14,14 +14,9 @@
         <div class="col-lg-7">
             <div class="main-image mb-3 shadow-sm rounded overflow-hidden bg-dark">
                 {% if car.get_main_image_url %}
-                    <img src="{{ car.get_main_image_url }}" class="img-fluid w-100" alt="{{ car.title }}" style="max-height: 500px; object-fit: contain;">
-                {% else %}
-                    <div class="bg-secondary text-white d-flex align-items-center justify-content-center" style="height: 400px;">
-                        No Image
-                    </div>
+                    <img src="{{ car.get_main_image_url }}" class="img-fluid w-100" style="max-height: 500px; object-fit: contain;">
                 {% endif %}
             </div>
-
             <div class="row g-2">
                 {% for car_image in car.images.all %}
                 <div class="col-3 col-md-2">
@@ -29,66 +24,110 @@
                 </div>
                 {% endfor %}
             </div>
+
+            {% if car.youtube_url %}
+            <div class="mt-5">
+                <h4 class="fw-bold border-start border-4 border-danger ps-3 mb-3">紹介動画</h4>
+                <div class="ratio ratio-16x9">
+                    <iframe src="{{ car.youtube_url|replace:'watch?v=,embed/' }}" allowfullscreen></iframe>
+                </div>
+            </div>
+            {% endif %}
         </div>
 
         <div class="col-lg-5">
-            <h1 class="h2 fw-bold mb-1">{{ car.title }}</h1>
-            <p class="text-muted mb-3">管理番号: {{ car.sku }}</p>
+            <div class="mb-2">
+                {% if car.is_new_arrival %}<span class="badge bg-warning text-dark me-2">NEW</span>{% endif %}
+                <span class="text-muted small">管理番号: {{ car.sku }}</span>
+            </div>
+            <h1 class="h2 fw-bold mb-4">{{ car.title }}</h1>
 
-            <div class="p-4 mb-4 bg-light rounded border border-danger-subtle shadow-sm" style="background-color: #fff9f9 !important;">
+            <div class="p-4 mb-4 rounded border border-danger-subtle shadow-sm" style="background-color: #fff9f9;">
                 <p class="text-danger mb-0 small fw-bold">支払総額（税込）</p>
-                <div class="d-flex align-items-baseline mb-2">
-                    <span class="text-danger fw-bold display-4">¥{{ car.price_total|intcomma }}</span>
-                </div>
+                <div class="text-danger fw-bold display-4 mb-2">¥{{ car.price_total|intcomma }}</div>
                 
-                <p class="mb-0 text-muted border-top border-danger pt-3 mt-2" style="font-size: 1.25rem; font-weight: 600; border-color: #ffc9c9 !important;">
+                <p class="mb-0 text-muted border-top border-danger pt-3 mt-2" style="font-size: 1.25rem; font-weight: 600;">
                     (車両本体: ¥{{ car.price_vehicle|intcomma }} + 諸費用: ¥{{ car.price_misc|intcomma }})
                 </p>
             </div>
 
-            <div class="table-responsive">
-                <table class="table table-sm table-borderless align-middle mb-4" style="font-size: 1.1rem;">
-                    <tbody>
-                        <tr class="border-bottom">
-                            <th class="text-muted fw-normal py-2" style="width: 40%;">年式</th>
-                            <td class="fw-bold text-end">{{ car.registration_year }}</td>
-                        </tr>
-                        <tr class="border-bottom">
-                            <th class="text-muted fw-normal py-2">走行距離</th>
-                            <td class="fw-bold text-end">{{ car.mileage }}</td>
-                        </tr>
-                        <tr class="border-bottom">
-                            <th class="text-muted fw-normal py-2">車検</th>
-                            <td class="fw-bold text-end">{{ car.inspection }}</td>
-                        </tr>
-                        <tr class="border-bottom">
-                            <th class="text-muted fw-normal py-2">修復歴</th>
-                            <td class="fw-bold text-end">{{ car.repair_history }}</td>
-                        </tr>
-                        <tr class="border-bottom">
-                            <th class="text-muted fw-normal py-2">ボディカラー</th>
-                            <td class="fw-bold text-end">{{ car.body_color }}</td>
-                        </tr>
-                        <tr class="border-bottom">
-                            <th class="text-muted fw-normal py-2">ミッション</th>
-                            <td class="fw-bold text-end">{{ car.transmission }}</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
+            <table class="table table-sm border-bottom mb-4">
+                <tr class="border-top"><th class="py-2 text-muted">年式</th><td class="text-end fw-bold">{{ car.registration_year }}</td></tr>
+                <tr class="border-top"><th class="py-2 text-muted">走行距離</th><td class="text-end fw-bold">{{ car.mileage }}</td></tr>
+                <tr class="border-top"><th class="py-2 text-muted">車検</th><td class="text-end fw-bold">{{ car.inspection }}</td></tr>
+                <tr class="border-top"><th class="py-2 text-muted">修復歴</th><td class="text-end fw-bold">{{ car.repair_history }}</td></tr>
+                <tr class="border-top"><th class="py-2 text-muted">ミッション</th><td class="text-end fw-bold">{{ car.transmission }}</td></tr>
+            </table>
 
-            <div class="d-grid gap-2">
-                <a href="tel:03-XXXX-XXXX" class="btn btn-danger btn-lg fw-bold py-3 shadow">
-                    <i class="bi bi-telephone-fill me-2"></i>この車両について問い合わせる
-                </a>
+            <div class="d-grid gap-2 mb-4">
+                <a href="tel:03-XXXX-XXXX" class="btn btn-danger btn-lg fw-bold py-3"><i class="bi bi-telephone-fill me-2"></i>問い合わせる</a>
             </div>
         </div>
     </div>
 
     <div class="mt-5">
-        <h4 class="fw-bold border-start border-4 border-danger ps-3 mb-4">車両詳細コメント</h4>
-        <div class="p-4 bg-white border rounded shadow-sm" style="white-space: pre-wrap; line-height: 1.8; font-size: 1.05rem;">
-            {{ car.comment }}
+        <h4 class="fw-bold border-start border-4 border-dark ps-3 mb-4">カタログスペック</h4>
+        <div class="row row-cols-2 row-cols-md-4 g-3 bg-light p-3 rounded">
+            <div class="col"><small class="text-muted">ハンドル</small><div>{{ car.handle }}</div></div>
+            <div class="col"><small class="text-muted">輸入経路</small><div>{{ car.import_route }}</div></div>
+            <div class="col"><small class="text-muted">全長×全幅×全高</small><div>{{ car.length }}×{{ car.width }}×{{ car.height }}</div></div>
+            <div class="col"><small class="text-muted">乗車定員</small><div>{{ car.capacity }}名</div></div>
+            <div class="col"><small class="text-muted">型式</small><div>{{ car.model_code }}</div></div>
+            <div class="col"><small class="text-muted">駆動方式</small><div>{{ car.drive_system }}</div></div>
+        </div>
+    </div>
+
+    <div class="mt-5">
+        <h4 class="fw-bold border-start border-4 border-dark ps-3 mb-4">装備・機能</h4>
+        <div class="row g-4">
+            <div class="col-md-4">
+                <h6 class="fw-bold text-primary"><i class="bi bi-shield-check me-2"></i>安全・快適装備</h6>
+                <div class="d-flex flex-wrap gap-2">
+                    {% if car.has_aircon %}<span class="badge bg-primary">エアコン</span>{% endif %}
+                    {% if car.has_abs %}<span class="badge bg-primary">ABS</span>{% endif %}
+                    {% if car.has_collision_safety %}<span class="badge bg-primary">衝突軽減ブレーキ</span>{% endif %}
+                    {% if car.has_cruise_control %}<span class="badge bg-primary">クルコン</span>{% endif %}
+                    {% if car.has_back_camera %}<span class="badge bg-primary">バックカメラ</span>{% endif %}
+                </div>
+            </div>
+            <div class="col-md-4">
+                <h6 class="fw-bold text-success"><i class="bi bi-stars me-2"></i>外装・内装</h6>
+                <div class="d-flex flex-wrap gap-2">
+                    {% if car.has_sunroof %}<span class="badge bg-success">サンルーフ</span>{% endif %}
+                    {% if car.has_leather_seat %}<span class="badge bg-success">本革シート</span>{% endif %}
+                    {% if car.has_aluminum_wheel %}<span class="badge bg-success">アルミホイール</span>{% endif %}
+                    {% if car.has_led_headlight %}<span class="badge bg-success">LEDライト</span>{% endif %}
+                </div>
+            </div>
+            <div class="col-md-4">
+                <h6 class="fw-bold text-info"><i class="bi bi-music-note-beamed me-2"></i>ナビ・オーディオ</h6>
+                <div class="d-flex flex-wrap gap-2">
+                    {% if car.has_hdd_navi %}<span class="badge bg-info">HDDナビ</span>{% endif %}
+                    {% if car.has_fullseg_tv %}<span class="badge bg-info">フルセグTV</span>{% endif %}
+                    {% if car.has_bluetooth %}<span class="badge bg-info">Bluetooth</span>{% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="mt-5">
+        <h4 class="fw-bold border-start border-4 border-dark ps-3 mb-4">車両状態・コメント</h4>
+        <div class="mb-4 p-3 border rounded bg-white" style="white-space: pre-wrap;">{{ car.comment }}</div>
+        
+        <div class="row g-3">
+            {% if car.equipment_standard %}<div class="col-md-4"><h6>標準装備</h6><div class="small p-2 bg-light">{{ car.equipment_standard }}</div></div>{% endif %}
+            {% if car.equipment_option %}<div class="col-md-4"><h6>オプション装備</h6><div class="small p-2 bg-light">{{ car.equipment_option }}</div></div>{% endif %}
+            {% if car.equipment_custom %}<div class="col-md-4"><h6>カスタム内容</h6><div class="small p-2 bg-light">{{ car.equipment_custom }}</div></div>{% endif %}
+        </div>
+    </div>
+
+    <div class="mt-5 mb-5 p-3 bg-light rounded">
+        <h6 class="fw-bold mb-3">車歴・書類</h6>
+        <div class="d-flex flex-wrap gap-3">
+            <span class="{% if car.has_one_owner %}text-primary{% else %}text-muted{% endif %}"><i class="bi bi-check-circle"></i> ワンオーナー</span>
+            <span class="{% if car.has_warranty %}text-primary{% else %}text-muted{% endif %}"><i class="bi bi-check-circle"></i> 保証書</span>
+            <span class="{% if car.has_service_record %}text-primary{% else %}text-muted{% endif %}"><i class="bi bi-check-circle"></i> 整備手帳</span>
+            <span class="{% if car.has_record_book %}text-primary{% else %}text-muted{% endif %}"><i class="bi bi-check-circle"></i> 記録簿</span>
         </div>
     </div>
 </div>
