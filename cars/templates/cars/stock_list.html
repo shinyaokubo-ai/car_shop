@@ -3,21 +3,18 @@
 
 {% block content %}
 <style>
-    /* 【スマホ(基本)設定】 3列でコンパクトに */
+    /* 基本：スマホ（3列） */
     .car-card-img { height: 110px; object-fit: cover; }
     .car-title { font-size: 0.8rem; height: 2.4em; overflow: hidden; margin-bottom: 0.5rem !important; }
     .car-badge { font-size: 0.65rem; padding: 0.2em; display: block; margin-bottom: 2px; }
-    .price-label { font-size: 0.6rem; margin-bottom: 0; }
     .price-text { font-size: 0.95rem; line-height: 1.2; }
 
-    /* 【PC版の設定：画面幅が768px以上】 */
+    /* PC版（画面幅が768px以上） */
     @media (min-width: 768px) {
         .car-card-img { height: 250px; }
         .car-title { font-size: 1.3rem; height: auto; font-weight: bold; }
         .car-badge { font-size: 1.05rem; padding: 0.5em 0.8em; display: inline-block !important; width: auto !important; margin-right: 5px; }
-        .price-label { font-size: 0.9rem; font-weight: bold; color: #666; }
         .price-text { font-size: 2.1rem; }
-        .detail-btn { font-size: 1rem; padding: 0.5rem 1.5rem !important; width: auto !important; }
     }
 </style>
 
@@ -34,28 +31,18 @@
                     {% else %}
                         <div class="bg-secondary text-white d-flex align-items-center justify-content-center car-card-img">No Image</div>
                     {% endif %}
-                    
-                    {% if car.is_sold_out %}
-                    <div class="position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center" style="background: rgba(0,0,0,0.6);">
-                        <span class="badge bg-danger p-1 p-md-2" style="font-size: 0.6rem; font-size: calc(0.6rem + 0.5vw);">SOLD OUT</span>
-                    </div>
-                    {% endif %}
                 </div>
 
                 <div class="card-body p-2 p-md-3 d-flex flex-column">
                     <h5 class="car-title fw-bold text-truncate">{{ car.title }}</h5>
                     
                     <div class="mb-2 mb-md-3">
-                      <span class="badge bg-light text-dark border car-badge">
-                        {{ car.registration_year }}
-                      </span>
-                      <span class="badge bg-light text-dark border car-badge">
-                        {{ car.mileage }}
-                      </span>
+                      <span class="badge bg-light text-dark border car-badge">年式: {{ car.registration_year }}</span>
+                      <span class="badge bg-light text-dark border car-badge">走行: {{ car.mileage }}</span>
                     </div>
 
                     <div class="mt-auto pt-2 border-top">
-                        <p class="price-label">支払総額（税込）</p>
+                        <p class="small text-muted mb-0 d-none d-md-block">支払総額（税込）</p>
                         <div class="d-md-flex justify-content-between align-items-end">
                             <div class="text-danger fw-bold price-text">
                                 {% if car.is_sold_out %}
@@ -64,7 +51,7 @@
                                     <span style="font-size: 0.7em;">¥</span>{{ car.price_total|intcomma }}
                                 {% endif %}
                             </div>
-                            <a href="{% url 'car_detail' car.pk %}" class="btn btn-outline-dark btn-sm detail-btn mt-2 mt-md-0 stretched-link">詳細</a>
+                            <a href="{% url 'car_detail' car.pk %}" class="btn btn-outline-dark btn-sm stretched-link d-none d-md-inline-block">詳細</a>
                         </div>
                     </div>
                 </div>
