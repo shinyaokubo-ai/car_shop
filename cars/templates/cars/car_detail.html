@@ -3,26 +3,21 @@
 
 {% block content %}
 <style>
-    /* タイルマスのデザイン：要望③の画像を再現 */
+    /* タイルマスのデザイン */
     .eq-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 8px; margin-bottom: 20px; }
     .eq-tile { padding: 8px 4px; border-radius: 4px; text-align: center; font-size: 0.8rem; font-weight: bold; border: 1px solid #e0e0e0; }
     .eq-on { background-color: #fff3e0; color: #ef6c00; border-color: #ffe0b2; } /* 装備あり：オレンジ */
     .eq-off { background-color: #ffffff; color: #ced4da; } /* 装備なし：グレー */
 
-    /* 写真の横並びスクロール（矢印対応） */
+    /* 写真スクロール設定 */
     .photo-scroll-container { position: relative; display: flex; align-items: center; }
-    .photo-row { 
-        display: flex; overflow-x: auto; scroll-behavior: smooth; gap: 8px; 
-        -ms-overflow-style: none; scrollbar-width: none; /* スクロールバー非表示 */
-    }
+    .photo-row { display: flex; overflow-x: auto; scroll-behavior: smooth; gap: 8px; scrollbar-width: none; }
     .photo-row::-webkit-scrollbar { display: none; }
     .photo-item { flex: 0 0 calc(100% / 6 - 8px); min-width: 100px; }
-    .scroll-btn { 
-        position: absolute; top: 50%; transform: translateY(-50%); background: rgba(0,0,0,0.5); 
-        color: white; border: none; border-radius: 50%; width: 30px; height: 30px; z-index: 10;
-    }
+    .scroll-btn { position: absolute; top: 50%; transform: translateY(-50%); background: rgba(0,0,0,0.5); color: white; border: none; border-radius: 50%; width: 30px; height: 30px; z-index: 10; }
     .btn-next { right: -15px; } .btn-prev { left: -15px; }
 
+    /* タブのデザイン */
     .nav-tabs .nav-link.active { color: #dc3545; font-weight: bold; border-bottom: 3px solid #dc3545; }
 </style>
 
@@ -71,8 +66,19 @@
                     (本体価格: ¥{{ car.price_vehicle|intcomma }} + 諸費用: ¥{{ car.price_misc|intcomma }})
                 </p>
             </div>
+
+            <div class="p-3 mb-4 bg-light rounded shadow-sm">
+                <table class="table table-sm table-borderless mb-0" style="font-size: 0.95rem;">
+                    <tr><th class="text-muted fw-normal">年式</th><td class="text-end fw-bold">{{ car.registration_year }}</td></tr>
+                    <tr><th class="text-muted fw-normal">走行距離</th><td class="text-end fw-bold">{{ car.mileage }}</td></tr>
+                    <tr><th class="text-muted fw-normal">車検</th><td class="text-end fw-bold">{{ car.inspection }}</td></tr>
+                    <tr><th class="text-muted fw-normal">修復歴</th><td class="text-end fw-bold">{{ car.repair_history }}</td></tr>
+                    <tr><th class="text-muted fw-normal">ボディカラー</th><td class="text-end fw-bold">{{ car.body_color }}</td></tr>
+                </table>
+            </div>
+
             <div class="d-grid gap-2">
-                <a href="tel:03-XXXX-XXXX" class="btn btn-danger btn-lg fw-bold py-3"><i class="bi bi-telephone-fill me-2"></i>問い合わせる</a>
+                <a href="tel:03-XXXX-XXXX" class="btn btn-danger btn-lg fw-bold py-3 shadow"><i class="bi bi-telephone-fill me-2"></i>問い合わせる</a>
             </div>
         </div>
     </div>
@@ -84,50 +90,55 @@
     </ul>
 
     <div class="tab-content border-start border-end border-bottom p-4 bg-white shadow-sm rounded-bottom mb-5">
+        
         <div class="tab-pane fade show active" id="spec">
             <div class="row row-cols-2 row-cols-md-4 g-4">
-                <div class="col"><small class="text-muted d-block">年式</small><strong>{{ car.registration_year }}</strong></div>
-                <div class="col"><small class="text-muted d-block">走行距離</small><strong>{{ car.mileage }}</strong></div>
-                <div class="col"><small class="text-muted d-block">車検</small><strong>{{ car.inspection }}</strong></div>
                 <div class="col"><small class="text-muted d-block">ハンドル</small><strong>{{ car.handle }}</strong></div>
+                <div class="col"><small class="text-muted d-block">輸入経路</small><strong>{{ car.import_route }}</strong></div>
+                <div class="col"><small class="text-muted d-block">型式</small><strong>{{ car.model_code }}</strong></div>
                 <div class="col"><small class="text-muted d-block">駆動方式</small><strong>{{ car.drive_system }}</strong></div>
-                <div class="col"><small class="text-muted d-block">車両重量</small><strong>{{ car.weight }}kg</strong></div>
+                <div class="col"><small class="text-muted d-block">ミッション</small><strong>{{ car.transmission }}</strong></div>
                 <div class="col"><small class="text-muted d-block">寸法(L/W/H)</small><strong>{{ car.length }}/{{ car.width }}/{{ car.height }}cm</strong></div>
+                <div class="col"><small class="text-muted d-block">車両重量</small><strong>{{ car.weight }}kg</strong></div>
                 <div class="col"><small class="text-muted d-block">ホイールベース</small><strong>{{ car.wheelbase }}mm</strong></div>
+                <div class="col"><small class="text-muted d-block">前トレッド</small><strong>{{ car.tread_front }}mm</strong></div>
+                <div class="col"><small class="text-muted d-block">後トレッド</small><strong>{{ car.tread_rear }}mm</strong></div>
+                <div class="col"><small class="text-muted d-block">乗車定員</small><strong>{{ car.capacity }}名</strong></div>
+                <div class="col"><small class="text-muted d-block">生産国</small><strong>{{ car.production_country }}</strong></div>
             </div>
         </div>
 
         <div class="tab-pane fade" id="equipment">
-            <h6 class="fw-bold mb-3 border-bottom pb-2">安全装備</h6>
+            <h6 class="fw-bold mb-3 border-bottom pb-2">主要装備一覧</h6>
             <div class="eq-grid">
                 <div class="eq-tile {% if car.has_aircon %}eq-on{% else %}eq-off{% endif %}">エアコン</div>
                 <div class="eq-tile {% if car.has_abs %}eq-on{% else %}eq-off{% endif %}">ABS</div>
-                <div class="eq-tile {% if car.has_collision_safety %}eq-on{% else %}eq-off{% endif %}">衝突被害軽減ブレーキ</div>
                 <div class="eq-tile {% if car.has_cruise_control %}eq-on{% else %}eq-off{% endif %}">クルコン</div>
-                <div class="eq-tile {% if car.has_back_camera %}eq-on{% else %}eq-off{% endif %}">バックカメラ</div>
-                <div class="eq-tile {% if car.has_etc %}eq-on{% else %}eq-off{% endif %}">ETC</div>
-            </div>
-
-            <h6 class="fw-bold mb-3 border-bottom pb-2">外装・内装装備</h6>
-            <div class="eq-grid">
                 <div class="eq-tile {% if car.has_leather_seat %}eq-on{% else %}eq-off{% endif %}">本革シート</div>
                 <div class="eq-tile {% if car.has_sunroof %}eq-on{% else %}eq-off{% endif %}">サンルーフ</div>
-                <div class="eq-tile {% if car.has_aluminum_wheel %}eq-on{% else %}eq-off{% endif %}">アルミホイール</div>
+                <div class="eq-tile {% if car.has_back_camera %}eq-on{% else %}eq-off{% endif %}">バックカメラ</div>
                 <div class="eq-tile {% if car.has_led_headlight %}eq-on{% else %}eq-off{% endif %}">LEDライト</div>
-                <div class="eq-tile {% if car.has_power_seat %}eq-on{% else %}eq-off{% endif %}">パワーシート</div>
             </div>
 
-            <h6 class="fw-bold mb-3 border-bottom pb-2">ナビ・オーディオ</h6>
-            <div class="eq-grid">
-                <div class="eq-tile {% if car.has_bluetooth %}eq-on{% else %}eq-off{% endif %}">Bluetooth</div>
-                <div class="eq-tile {% if car.has_fullseg_tv %}eq-on{% else %}eq-off{% endif %}">フルセグTV</div>
-                <div class="eq-tile {% if car.has_hdd_navi %}eq-on{% else %}eq-off{% endif %}">HDDナビ</div>
-            </div>
-
-            <div class="row g-4 pt-4 border-top">
-                <div class="col-md-4"><h6>標準装備</h6><div class="p-2 bg-light small rounded">{{ car.equipment_standard }}</div></div>
-                <div class="col-md-4"><h6>オプション</h6><div class="p-2 bg-light small rounded">{{ car.equipment_option }}</div></div>
-                <div class="col-md-4"><h6>カスタム</h6><div class="p-2 bg-light small rounded">{{ car.equipment_custom }}</div></div>
+            <div class="mt-4 pt-4 border-top">
+                {% if car.equipment_standard %}
+                <div class="mb-4">
+                    <h6 class="fw-bold border-start border-3 border-danger ps-2">標準装備</h6>
+                    <div class="p-3 bg-light rounded" style="white-space: pre-wrap; font-size: 0.9rem;">{{ car.equipment_standard }}</div>
+                </div>
+                {% endif %}
+                {% if car.equipment_option %}
+                <div class="mb-4">
+                    <h6 class="fw-bold border-start border-3 border-danger ps-2">オプション装備</h6>
+                    <div class="p-3 bg-light rounded" style="white-space: pre-wrap; font-size: 0.9rem;">{{ car.equipment_option }}</div>
+                </div>
+                {% endif %}
+                {% if car.equipment_custom %}
+                <div class="mb-4">
+                    <h6 class="fw-bold border-start border-3 border-danger ps-2">カスタム装備</h6>
+                    <div class="p-3 bg-light rounded" style="white-space: pre-wrap; font-size: 0.9rem;">{{ car.equipment_custom }}</div>
+                </div>
+                {% endif %}
             </div>
         </div>
 
@@ -139,14 +150,15 @@
                 <div class="eq-tile {% if car.has_one_owner %}eq-on{% else %}eq-off{% endif %}">ワンオーナー</div>
                 <div class="eq-tile {% if car.has_warranty %}eq-on{% else %}eq-off{% endif %}">保証書</div>
                 <div class="eq-tile {% if car.has_service_record %}eq-on{% else %}eq-off{% endif %}">整備手帳</div>
-                <div class="eq-tile {% if car.has_record_book %}eq-yes{% else %}eq-no{% endif %}" style="display:none;"></div> <div class="eq-tile {% if car.has_record_book %}eq-on{% else %}eq-off{% endif %}">記録簿</div>
+                <div class="eq-tile {% if car.has_record_book %}eq-on{% else %}eq-off{% endif %}">記録簿</div>
+                <div class="eq-tile {% if car.has_manual %}eq-on{% else %}eq-off{% endif %}">取扱説明書</div>
                 <div class="eq-tile {% if car.has_spare_key %}eq-on{% else %}eq-off{% endif %}">スペアキー</div>
             </div>
 
             {% if car.youtube_url %}
             <div class="d-grid pt-3 border-top">
                 <a href="{{ car.youtube_url }}" target="_blank" class="btn btn-outline-danger btn-lg fw-bold py-3">
-                    <i class="bi bi-youtube me-2"></i>紹介動画を見る
+                    <i class="bi bi-youtube me-2"></i>車両紹介動画を見る（YouTube）
                 </a>
             </div>
             {% endif %}
