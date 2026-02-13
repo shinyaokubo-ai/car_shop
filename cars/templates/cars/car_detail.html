@@ -3,11 +3,11 @@
 
 {% block content %}
 <style>
-    /* タイルマスのデザイン */
+    /* タイルマスのデザイン：あるものはオレンジ、ないものはグレー */
     .eq-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 8px; margin-bottom: 20px; }
-    .eq-tile { padding: 8px 4px; border-radius: 4px; text-align: center; font-size: 0.8rem; font-weight: bold; border: 1px solid #e0e0e0; }
-    .eq-on { background-color: #fff3e0; color: #ef6c00; border-color: #ffe0b2; } /* 装備あり：オレンジ */
-    .eq-off { background-color: #ffffff; color: #ced4da; } /* 装備なし：グレー */
+    .eq-tile { padding: 8px 4px; border-radius: 4px; text-align: center; font-size: 0.75rem; font-weight: bold; border: 1px solid #e0e0e0; }
+    .eq-on { background-color: #fff3e0; color: #ef6c00; border-color: #ffe0b2; }
+    .eq-off { background-color: #ffffff; color: #ced4da; }
 
     /* 写真スクロール設定 */
     .photo-scroll-container { position: relative; display: flex; align-items: center; }
@@ -17,7 +17,6 @@
     .scroll-btn { position: absolute; top: 50%; transform: translateY(-50%); background: rgba(0,0,0,0.5); color: white; border: none; border-radius: 50%; width: 30px; height: 30px; z-index: 10; }
     .btn-next { right: -15px; } .btn-prev { left: -15px; }
 
-    /* タブのデザイン */
     .nav-tabs .nav-link.active { color: #dc3545; font-weight: bold; border-bottom: 3px solid #dc3545; }
 </style>
 
@@ -90,7 +89,6 @@
     </ul>
 
     <div class="tab-content border-start border-end border-bottom p-4 bg-white shadow-sm rounded-bottom mb-5">
-        
         <div class="tab-pane fade show active" id="spec">
             <div class="row row-cols-2 row-cols-md-4 g-4">
                 <div class="col"><small class="text-muted d-block">ハンドル</small><strong>{{ car.handle }}</strong></div>
@@ -109,15 +107,50 @@
         </div>
 
         <div class="tab-pane fade" id="equipment">
-            <h6 class="fw-bold mb-3 border-bottom pb-2">主要装備一覧</h6>
+            <h6 class="fw-bold mb-3 border-bottom pb-2">安全装備</h6>
             <div class="eq-grid">
                 <div class="eq-tile {% if car.has_aircon %}eq-on{% else %}eq-off{% endif %}">エアコン</div>
+                <div class="eq-tile {% if car.has_power_steering %}eq-on{% else %}eq-off{% endif %}">パワステ</div>
+                <div class="eq-tile {% if car.has_power_window %}eq-on{% else %}eq-off{% endif %}">パワーウィンドウ</div>
+                <div class="eq-tile {% if car.has_airbag %}eq-on{% else %}eq-off{% endif %}">エアバッグ</div>
                 <div class="eq-tile {% if car.has_abs %}eq-on{% else %}eq-off{% endif %}">ABS</div>
+                <div class="eq-tile {% if car.has_esc %}eq-on{% else %}eq-off{% endif %}">ESC(横滑り防止)</div>
+                <div class="eq-tile {% if car.has_collision_safety %}eq-on{% else %}eq-off{% endif %}">衝突軽減ブレーキ</div>
+                <div class="eq-tile {% if car.has_lane_assist %}eq-on{% else %}eq-off{% endif %}">レーンアシスト</div>
+                <div class="eq-tile {% if car.has_park_assist %}eq-on{% else %}eq-off{% endif %}">パークアシスト</div>
+                <div class="eq-tile {% if car.has_auto_parking %}eq-on{% else %}eq-off{% endif %}">自動駐車システム</div>
                 <div class="eq-tile {% if car.has_cruise_control %}eq-on{% else %}eq-off{% endif %}">クルコン</div>
-                <div class="eq-tile {% if car.has_leather_seat %}eq-on{% else %}eq-off{% endif %}">本革シート</div>
-                <div class="eq-tile {% if car.has_sunroof %}eq-on{% else %}eq-off{% endif %}">サンルーフ</div>
+                <div class="eq-tile {% if car.has_keyless %}eq-on{% else %}eq-off{% endif %}">キーレス</div>
+                <div class="eq-tile {% if car.has_smart_key %}eq-on{% else %}eq-off{% endif %}">スマートキー</div>
+                <div class="eq-tile {% if car.has_etc %}eq-on{% else %}eq-off{% endif %}">ETC</div>
                 <div class="eq-tile {% if car.has_back_camera %}eq-on{% else %}eq-off{% endif %}">バックカメラ</div>
+                <div class="eq-tile {% if car.has_camera_360 %}eq-on{% else %}eq-off{% endif %}">全周囲カメラ</div>
+            </div>
+
+            <h6 class="fw-bold mb-3 border-bottom pb-2">外装・内装装備</h6>
+            <div class="eq-grid">
+                <div class="eq-tile {% if car.has_sunroof %}eq-on{% else %}eq-off{% endif %}">サンルーフ</div>
+                <div class="eq-tile {% if car.has_leather_seat %}eq-on{% else %}eq-off{% endif %}">本革シート</div>
+                <div class="eq-tile {% if car.has_aluminum_wheel %}eq-on{% else %}eq-off{% endif %}">アルミホイール</div>
+                <div class="eq-tile {% if car.has_aero_parts %}eq-on{% else %}eq-off{% endif %}">エアロパーツ</div>
+                <div class="eq-tile {% if car.has_low_down %}eq-on{% else %}eq-off{% endif %}">ローダウン</div>
+                <div class="eq-tile {% if car.has_lift_up %}eq-on{% else %}eq-off{% endif %}">リフトアップ</div>
+                <div class="eq-tile {% if car.has_power_gate %}eq-on{% else %}eq-off{% endif %}">電動リアゲート</div>
                 <div class="eq-tile {% if car.has_led_headlight %}eq-on{% else %}eq-off{% endif %}">LEDライト</div>
+                <div class="eq-tile {% if car.has_hid_headlight %}eq-on{% else %}eq-off{% endif %}">HIDライト</div>
+                <div class="eq-tile {% if car.has_seat_heater %}eq-on{% else %}eq-off{% endif %}">シートヒーター</div>
+                <div class="eq-tile {% if car.has_power_seat %}eq-on{% else %}eq-off{% endif %}">パワーシート</div>
+            </div>
+
+            <h6 class="fw-bold mb-3 border-bottom pb-2">ナビ・オーディオ</h6>
+            <div class="eq-grid">
+                <div class="eq-tile {% if car.has_hdd_navi %}eq-on{% else %}eq-off{% endif %}">HDDナビ</div>
+                <div class="eq-tile {% if car.has_memory_navi %}eq-on{% else %}eq-off{% endif %}">メモリーナビ</div>
+                <div class="eq-tile {% if car.has_fullseg_tv %}eq-on{% else %}eq-off{% endif %}">フルセグTV</div>
+                <div class="eq-tile {% if car.has_bluetooth %}eq-on{% else %}eq-off{% endif %}">Bluetooth</div>
+                <div class="eq-tile {% if car.has_dvd %}eq-on{% else %}eq-off{% endif %}">DVD再生</div>
+                <div class="eq-tile {% if car.has_music_server %}eq-on{% else %}eq-off{% endif %}">ミュージックサーバー</div>
+                <div class="eq-tile {% if car.has_usb_input %}eq-on{% else %}eq-off{% endif %}">USB入力</div>
             </div>
 
             <div class="mt-4 pt-4 border-top">
