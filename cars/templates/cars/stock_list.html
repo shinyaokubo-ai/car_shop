@@ -3,23 +3,30 @@
 
 {% block content %}
 <style>
+    /* スマホ設定（3列） */
     .car-card-img { height: 110px; object-fit: cover; }
     .car-title { font-size: 0.8rem; height: 2.4em; overflow: hidden; margin-bottom: 0.5rem !important; }
     .car-badge { font-size: 0.65rem; padding: 0.2em; display: block; margin-bottom: 2px; }
     .price-text { font-size: 0.95rem; line-height: 1.2; }
+    /* スマホ用詳細ボタン：小さくして確実に表示 */
+    .detail-btn { font-size: 0.65rem; padding: 2px 4px; width: 100%; margin-top: 5px; }
+
+    /* PC設定（768px以上） */
     @media (min-width: 768px) {
         .car-card-img { height: 250px; }
         .car-title { font-size: 1.3rem; height: auto; font-weight: bold; }
         .car-badge { font-size: 1.05rem; padding: 0.5em 0.8em; display: inline-block !important; width: auto !important; margin-right: 5px; }
         .price-text { font-size: 2.1rem; }
+        .detail-btn { font-size: 1rem; padding: 0.5rem 1.5rem !important; width: auto !important; margin-top: 0; }
     }
 </style>
+
 <div class="container py-4">
     <h2 class="mb-4 fw-bold">在庫車両一覧</h2>
     <div class="row row-cols-3 g-2 g-md-4">
         {% for car in cars %}
         <div class="col">
-            <div class="card h-100 shadow-sm border-0">
+            <div class="card h-100 shadow-sm border-0 position-relative">
                 <div class="position-relative">
                     {% if car.get_main_image_url %}
                         <img src="{{ car.get_main_image_url }}" class="card-img-top car-card-img" alt="{{ car.title }}">
@@ -32,11 +39,12 @@
                       <span class="badge bg-light text-dark border car-badge">{{ car.mileage }}</span>
                     </div>
                     <div class="mt-auto pt-2 border-top">
+                        <p class="small text-muted mb-0 d-none d-md-block" style="font-size: 0.7rem;">支払総額（税込）</p>
                         <div class="d-md-flex justify-content-between align-items-end">
                             <div class="text-danger fw-bold price-text">
                                 {% if car.is_sold_out %}<span>売約済</span>{% else %}<span style="font-size: 0.7em;">¥</span>{{ car.price_total|intcomma }}{% endif %}
                             </div>
-                            <a href="{% url 'car_detail' car.pk %}" class="btn btn-outline-dark btn-sm stretched-link d-none d-md-inline-block">詳細</a>
+                            <a href="{% url 'car_detail' car.pk %}" class="btn btn-outline-dark detail-btn stretched-link">詳細</a>
                         </div>
                     </div>
                 </div>
