@@ -1,0 +1,5 @@
+static/images/
+media/
+venv/
+.git/
+*.pyc
