@@ -35,9 +35,13 @@
                 <div class="card-body p-2 p-md-3 d-flex flex-column">
                     <h5 class="car-title fw-bold text-truncate">{{ car.title }}</h5>
                     <div class="mb-2">
-                    <span class="badge bg-light text-dark border car-badge">車検: {{ car.registration_year }}</span>
-                    <span class="badge bg-light text-dark border car-badge">走行距離: {{ car.mileage }}</span>
-                </div>
+                    <span class="badge bg-light text-dark border car-badge">
+                        <span class="text-secondary fw-normal" style="font-size: 0.8em;">車検: </span><span class="fw-bold">{{ car.registration_year }}</span>
+                    </span>
+                    <span class="badge bg-light text-dark border car-badge">
+                        <span class="text-secondary fw-normal" style="font-size: 0.8em;">走行距離: </span><span class="fw-bold">{{ car.mileage }}</span>
+                    </span>
+                    </div>
                     <div class="mt-auto pt-2 border-top">
                         <p class="small text-muted mb-0 d-none d-md-block" style="font-size: 0.7rem;">支払総額（税込）</p>
                         <div class="d-md-flex justify-content-between align-items-end">
