@@ -36,10 +36,10 @@
                     <h5 class="car-title fw-bold text-truncate">{{ car.title }}</h5>
                     <div class="mb-2">
                     <span class="badge bg-light text-dark border car-badge">
-                        <span class="text-secondary fw-normal" style="font-size: 0.8em;">車検: </span><span class="fw-bold">{{ car.registration_year }}</span>
+                        <span class="text-secondary">車検: </span>{{ car.registration_year }}
                     </span>
                     <span class="badge bg-light text-dark border car-badge">
-                        <span class="text-secondary fw-normal" style="font-size: 0.8em;">走行距離: </span><span class="fw-bold">{{ car.mileage }}</span>
+                        <span class="text-secondary">走行距離: </span>{{ car.mileage }}
                     </span>
                     </div>
                     <div class="mt-auto pt-2 border-top">
@@ -48,7 +48,7 @@
                             <div class="text-danger fw-bold price-text">
                                 {% if car.is_sold_out %}<span>売約済</span>{% else %}<span style="font-size: 0.7em;">¥</span>{{ car.price_total|intcomma }}{% endif %}
                             </div>
-                            <a href="{% url 'car_detail' car.pk %}" class="btn btn-outline-dark detail-btn stretched-link">詳細</a>
+                            <a href="{% url 'car_detail' car.pk %}" class="btn btgin-outline-dark detail-btn stretched-link">詳細</a>
                         </div>
                     </div>
                 </div>
