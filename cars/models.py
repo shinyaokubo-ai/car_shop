@@ -17,7 +17,7 @@ class Car(models.Model):
     transmission = models.CharField("ミッション", max_length=50, default="AT")
     drive_system = models.CharField("駆動方式", max_length=50, blank=True, null=True, default="4WD")
 
-    # --- ★追加：詳細スペック（添付画像の内容） ---
+    # --- 詳細スペック ---
     handle = models.CharField("ハンドル", max_length=20, choices=[('右', '右'), ('左', '左')], default='右')
     import_route = models.CharField("輸入経路", max_length=50, choices=[('ディーラー車', 'ディーラー車'), ('並行輸入車', '並行輸入車')], default='ディーラー車')
     interior_color = models.CharField("内装色", max_length=50, blank=True)
@@ -38,7 +38,11 @@ class Car(models.Model):
     transmission_pos = models.CharField("ミッション位置", max_length=50, blank=True)
     has_ai_shift = models.BooleanField("AI-SHIFT", default=False)
     has_manual_mode = models.BooleanField("マニュアルモード", default=False)
-    four_ws_status = models.CharField("4WS", max_length=10, blank=True, default="△") # ○、△、×などを入力
+    four_ws_status = models.CharField("4WS", max_length=10, blank=True, default="△")
+    
+    # 🌟追加：基本スペック系のチェック項目
+    has_4wd_check = models.BooleanField("4WD(チェックボックス)", default=False)
+    has_diesel = models.BooleanField("ディーゼル", default=False)
     
     # --- 状態フラグ ---
     is_sold_out = models.BooleanField("SOLD OUT", default=False)
@@ -61,6 +65,10 @@ class Car(models.Model):
     has_etc = models.BooleanField("ETC", default=False)
     has_back_camera = models.BooleanField("バックカメラ", default=False)
     has_camera_360 = models.BooleanField("全周囲カメラ", default=False)
+    # 🌟追加：安全装備系の新項目
+    has_auto_highbeam = models.BooleanField("オートマチックハイビーム", default=False)
+    has_auto_light = models.BooleanField("オートライト", default=False)
+    has_fog_lamp = models.BooleanField("フォグランプ", default=False)
     
     # --- 外装・内装装備 ---
     has_sunroof = models.BooleanField("サンルーフ", default=False)
@@ -74,6 +82,12 @@ class Car(models.Model):
     has_hid_headlight = models.BooleanField("HIDヘッドライト", default=False)
     has_seat_heater = models.BooleanField("シートヒーター", default=False)
     has_power_seat = models.BooleanField("パワーシート", default=False)
+    # 🌟追加：外装・内装系の新項目
+    has_seat_aircon = models.BooleanField("シートエアコン", default=False)
+    has_half_leather_seat = models.BooleanField("ハーフレザーシート", default=False)
+    has_custom_muffler = models.BooleanField("社外マフラー", default=False)
+    has_full_aero = models.BooleanField("フルエアロ", default=False)
+    has_runflat_tire = models.BooleanField("ランフラットタイヤ", default=False)
     
     # --- ナビ・オーディオ ---
     has_hdd_navi = models.BooleanField("HDDナビ", default=False)
@@ -83,6 +97,10 @@ class Car(models.Model):
     has_dvd = models.BooleanField("DVD再生", default=False)
     has_music_server = models.BooleanField("ミュージックサーバー", default=False)
     has_usb_input = models.BooleanField("USB入力端子", default=False)
+    # 🌟追加：ナビ・オーディオ系の新項目
+    has_music_player = models.BooleanField("ミュージックプレイヤー接続", default=False)
+    has_cd = models.BooleanField("CD再生", default=False)
+    has_rear_monitor = models.BooleanField("後席モニター", default=False)
 
     # --- 車歴・書類 ---
     has_one_owner = models.BooleanField("ワンオーナー", default=False)
@@ -106,7 +124,6 @@ class Car(models.Model):
     def get_main_image_url(self):
         img = self.images.first()
         return img.image.url if img else None
-
 
 class CarImage(models.Model):
     car = models.ForeignKey(Car, on_delete=models.CASCADE, related_name='images')
