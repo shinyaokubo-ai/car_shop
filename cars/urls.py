@@ -2,9 +2,12 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
-    # http://127.0.0.1:8000/ にアクセスしたら一覧を表示
+    # 在庫一覧ページ
     path('', views.stock_list, name='stock_list'),
-
-    # ★追加： <int:pk> は「整数のIDが入るよ」という意味です
-    path('<int:pk>/', views.car_detail, name='car_detail')
+    
+    # 車両詳細ページ
+    path('<int:pk>/', views.car_detail, name='car_detail'),
+    
+    # 画像アップロードページ
+    path('<int:pk>/upload/', views.car_image_upload, name='car_image_upload'),
 ]

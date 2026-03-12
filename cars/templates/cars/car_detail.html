@@ -39,7 +39,7 @@
             <div class="photo-scroll-container mb-4">
                 <button class="scroll-btn btn-prev" onclick="scrollRow('exterior', -200)">◀</button>
                 <div class="photo-row" id="exterior-row">
-                    {% for img in car.images.all %}{% if img.image_type == 'exterior' %}
+                    {% for img in car.images.all %}{% if img.category == 'exterior' %}
                         <div class="photo-item" onclick="changeImage('{{ img.image.url }}')">
                             <img src="{{ img.image.url }}" class="img-fluid rounded border shadow-sm" style="height: 80px; width: 100%; object-fit: cover;">
                         </div>
@@ -52,7 +52,7 @@
             <div class="photo-scroll-container">
                 <button class="scroll-btn btn-prev" onclick="scrollRow('interior', -200)">◀</button>
                 <div class="photo-row" id="interior-row">
-                    {% for img in car.images.all %}{% if img.image_type == 'interior' %}
+                    {% for img in car.images.all %}{% if img.category == 'interior' %}
                         <div class="photo-item" onclick="changeImage('{{ img.image.url }}')">
                             <img src="{{ img.image.url }}" class="img-fluid rounded border shadow-sm" style="height: 80px; width: 100%; object-fit: cover;">
                         </div>

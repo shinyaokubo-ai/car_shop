@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div style="max-width: 800px; margin: 0 auto; padding: 20px;">
+    <h2 style="text-align: center; margin-bottom: 30px;">{{ car.name }} の画像アップロード</h2>
+
+    {% csrf_token %}
+
+    <div style="display: flex; gap: 20px; justify-content: space-between;">
+        
+        <div id="drop-zone-exterior" style="flex: 1; border: 3px dashed #ccc; border-radius: 10px; padding: 50px 20px; text-align: center; background-color: #f9f9f9; cursor: pointer; transition: 0.3s;">
+            <h3 style="color: #333;">🚗 外装 (Exterior)</h3>
+            <p style="color: #666;">ここに画像をドラッグ＆ドロップ<br>またはクリックして選択</p>
+            <input type="file" id="file-exterior" multiple style="display: none;" accept="image/*">
+        </div>
+
+        <div id="drop-zone-interior" style="flex: 1; border: 3px dashed #ccc; border-radius: 10px; padding: 50px 20px; text-align: center; background-color: #f9f9f9; cursor: pointer; transition: 0.3s;">
+            <h3 style="color: #333;">💺 内装 (Interior)</h3>
+            <p style="color: #666;">ここに画像をドラッグ＆ドロップ<br>またはクリックして選択</p>
+            <input type="file" id="file-interior" multiple style="display: none;" accept="image/*">
+        </div>
+
+    </div>
+
+    <div id="upload-status" style="text-align: center; margin-top: 20px; font-weight: bold; color: #0066cc;"></div>
+
+    <div style="text-align: center; margin-top: 30px;">
+        <a href="{% url 'car_detail' car.pk %}" style="padding: 10px 20px; background-color: #333; color: white; text-decoration: none; border-radius: 5px;">車両詳細に戻る</a>
+    </div>
+</div>
+
+<script>
+    // 共通のアップロード処理
+    function setupDropZone(zoneId, inputId, category) {
+        const dropZone = document.getElementById(zoneId);
+        const fileInput = document.getElementById(inputId);
+        const statusDiv = document.getElementById('upload-status');
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+        // クリックでもファイルを選べるようにする
+        dropZone.addEventListener('click', () => fileInput.click());
+
+        // ドラッグ中の見た目を変える
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.style.backgroundColor = '#e1f5fe';
+            dropZone.style.borderColor = '#0288d1';
+        });
+
+        dropZone.addEventListener('dragleave', (e) => {
+            e.preventDefault();
+            dropZone.style.backgroundColor = '#f9f9f9';
+            dropZone.style.borderColor = '#ccc';
+        });
+
+        // ドロップされた時の処理
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.style.backgroundColor = '#f9f9f9';
+            dropZone.style.borderColor = '#ccc';
+            handleFiles(e.dataTransfer.files);
+        });
+
+        // クリックでファイルが選ばれた時の処理
+        fileInput.addEventListener('change', (e) => {
+            handleFiles(e.target.files);
+        });
+
+        // サーバー（Cloudinary）へ送信！
+        function handleFiles(files) {
+            if (files.length === 0) return;
+
+            statusDiv.innerText = "🚀 アップロード中...（Cloudinaryへ送信しています）";
+            statusDiv.style.color = "#0066cc";
+
+            const formData = new FormData();
+            formData.append('category', category);
+            for (let i = 0; i < files.length; i++) {
+                formData.append('images', files[i]);
+            }
+
+            fetch("", {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': csrfToken
+                },
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    statusDiv.innerText = "✅ アップロード完了！ドサッと保存されました！";
+                    statusDiv.style.color = "green";
+                }
+            })
+            .catch(error => {
+                statusDiv.innerText = "❌ エラーが発生しました。";
+                statusDiv.style.color = "red";
+            });
+        }
+    }
+
+    // 外装と内装、それぞれのエリアに魔法をかける
+    setupDropZone('drop-zone-exterior', 'file-exterior', 'exterior');
+    setupDropZone('drop-zone-interior', 'file-interior', 'interior');
+</script>
+{% endblock %}
