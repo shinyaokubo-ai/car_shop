@@ -126,34 +126,11 @@ class Car(models.Model):
         img = self.images.first()
         return img.image.url if img else None
 
-# (※この上に、すでにある Car モデルなどのコードが書かれている状態にしてください)
-
 class CarImage(models.Model):
     """ 車両の画像（複数枚）を保存するモデル """
-    
-    # 🌟 内装と外装を区別するための選択肢
-    CATEGORY_CHOICES = (
-        ('exterior', '外装'),
-        ('interior', '内装'),
-    )
-
-    # どの車に紐づく画像か（Carモデルと連携）
-    # ※もし車モデルの名前が 'Car' ではない場合（例えば 'Cars' など）、そこだけ書き換えてください
     car = models.ForeignKey('Car', on_delete=models.CASCADE, related_name='images')
-
-    # Cloudinaryに保存される画像データ
     image = CloudinaryField('image')
-
-    # 🌟 外装か内装かを記録するカラム（デフォルトは外装）
-    category = models.CharField(
-        max_length=20, 
-        choices=CATEGORY_CHOICES, 
-        default='exterior', 
-        verbose_name='画像カテゴリー'
-    )
-
-    # 画像が追加された日時（並び替え用）
-    created_at = models.DateTimeField(auto_now_add=True)
+    image_type = models.CharField(max_length=20, default='exterior')
 
     def __str__(self):
-        return f"{self.car}の画像 ({self.get_category_display()})"
+        return f"{self.car.title}の画像"
