@@ -1,4 +1,93 @@
-<ul class="nav nav-tabs mb-0" id="carTab" role="tablist">
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block content %}
+<style>
+    /* タイルマスのデザイン */
+    .eq-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 8px; margin-bottom: 20px; }
+    .eq-tile { padding: 8px 4px; border-radius: 4px; text-align: center; font-size: 0.75rem; font-weight: bold; border: 1px solid #e0e0e0; }
+    .eq-on { background-color: #fff3e0; color: #ef6c00; border-color: #ffe0b2; }
+    .eq-off { background-color: #ffffff; color: #ced4da; }
+
+    /* 写真スクロール設定 */
+    .photo-scroll-container { position: relative; display: flex; align-items: center; }
+    .photo-row { display: flex; overflow-x: auto; scroll-behavior: smooth; gap: 8px; scrollbar-width: none; }
+    .photo-row::-webkit-scrollbar { display: none; }
+    .photo-item { flex: 0 0 calc(100% / 6 - 8px); min-width: 100px; cursor: pointer; transition: opacity 0.2s; }
+    .photo-item:hover { opacity: 0.7; }
+    .scroll-btn { position: absolute; top: 50%; transform: translateY(-50%); background: rgba(0,0,0,0.5); color: white; border: none; border-radius: 50%; width: 30px; height: 30px; z-index: 10; }
+    .btn-next { right: -15px; } .btn-prev { left: -15px; }
+
+    .nav-tabs .nav-link.active { color: #dc3545; font-weight: bold; border-bottom: 3px solid #dc3545; }
+</style>
+
+<div class="container py-4">
+    <div class="mb-4">
+        <h1 class="h2 fw-bold mb-1">{{ car.title }}</h1>
+        <p class="text-muted small">管理番号: {{ car.sku }}</p>
+    </div>
+
+    <div class="row g-4 mb-5">
+        <div class="col-lg-7">
+            <div class="main-image mb-4 shadow rounded overflow-hidden bg-dark text-center">
+                {% if car.get_main_image_url %}
+                    <img id="mainDisplayImage" src="{{ car.get_main_image_url }}" class="img-fluid" style="max-height: 500px;">
+                {% endif %}
+            </div>
+
+            <h6 class="fw-bold mt-4 mb-2"><i class="bi bi-camera"></i> 外装写真</h6>
+            <div class="photo-scroll-container mb-4">
+                <button class="scroll-btn btn-prev" onclick="scrollRow('exterior', -200)">◀</button>
+                <div class="photo-row" id="exterior-row">
+                    {% for img in car.images.all %}{% if img.image_type == 'exterior' or img.image_type == '外装' %}
+                        <div class="photo-item" onclick="changeImage('{{ img.image.url }}')">
+                            <img src="{{ img.image.url }}" class="img-fluid rounded border shadow-sm" style="height: 80px; width: 100%; object-fit: cover;">
+                        </div>
+                    {% endif %}{% endfor %}
+                </div>
+                <button class="scroll-btn btn-next" onclick="scrollRow('exterior', 200)">▶</button>
+            </div>
+
+            <h6 class="fw-bold mb-2"><i class="bi bi-door-open"></i> 内装写真</h6>
+            <div class="photo-scroll-container">
+                <button class="scroll-btn btn-prev" onclick="scrollRow('interior', -200)">◀</button>
+                <div class="photo-row" id="interior-row">
+                    {% for img in car.images.all %}{% if img.image_type == 'interior' or img.image_type == '内装' %}
+                        <div class="photo-item" onclick="changeImage('{{ img.image.url }}')">
+                            <img src="{{ img.image.url }}" class="img-fluid rounded border shadow-sm" style="height: 80px; width: 100%; object-fit: cover;">
+                        </div>
+                    {% endif %}{% endfor %}
+                </div>
+                <button class="scroll-btn btn-next" onclick="scrollRow('interior', 200)">▶</button>
+            </div>
+        </div>
+
+        <div class="col-lg-5">
+            <div class="p-4 mb-4 rounded border border-danger shadow-sm" style="background-color: #fff9f9;">
+                <p class="text-danger mb-0 small fw-bold">支払総額（税込）</p>
+                <div class="text-danger fw-bold display-4">¥{{ car.price_total|intcomma }}</div>
+                <p class="mb-0 text-muted border-top border-danger pt-3 mt-3" style="font-size: 1.1rem;">
+                    (本体価格: ¥{{ car.price_vehicle|intcomma }} + 諸費用: ¥{{ car.price_misc|intcomma }})
+                </p>
+            </div>
+
+            <div class="p-3 mb-4 bg-light rounded shadow-sm">
+                <table class="table table-sm table-borderless mb-0" style="font-size: 0.95rem;">
+                    <tr><th class="text-muted fw-normal">年式</th><td class="text-end fw-bold">{{ car.registration_year }}</td></tr>
+                    <tr><th class="text-muted fw-normal">走行距離</th><td class="text-end fw-bold">{{ car.mileage }}</td></tr>
+                    <tr><th class="text-muted fw-normal">車検</th><td class="text-end fw-bold">{{ car.inspection }}</td></tr>
+                    <tr><th class="text-muted fw-normal">修復歴</th><td class="text-end fw-bold">{{ car.repair_history }}</td></tr>
+                    <tr><th class="text-muted fw-normal">ボディカラー</th><td class="text-end fw-bold">{{ car.body_color }}</td></tr>
+                </table>
+            </div>
+
+            <div class="d-grid gap-2">
+                <a href="tel:03-XXXX-XXXX" class="btn btn-danger btn-lg fw-bold py-3 shadow"><i class="bi bi-telephone-fill me-2"></i>問い合わせる</a>
+            </div>
+        </div>
+    </div>
+
+    <ul class="nav nav-tabs mb-0" id="carTab" role="tablist">
         <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#spec">基本情報</button></li>
         <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#equipment">装備・機能</button></li>
         <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#extra-equipment">標準・OP・社外装備</button></li>
@@ -163,3 +252,10 @@
             {% endif %}
         </div>
     </div>
+</div>
+
+<script>
+    function changeImage(url) { document.getElementById('mainDisplayImage').src = url; }
+    function scrollRow(type, amount) { document.getElementById(type + '-row').scrollBy({ left: amount, behavior: 'smooth' }); }
+</script>
+{% endblock %}
