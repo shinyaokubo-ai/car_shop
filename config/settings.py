@@ -71,34 +71,6 @@ USE_TZ = True
 
 # --- 静的ファイル・画像保存 (Cloudinary / Whitenoise) ---
 STATIC_URL = '/static/'
-STATIC_ROOT = BASE_DIR / 'staticfiles' 
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
-
-CLOUDINARY_STORAGE = {
-    'CLOUD_NAME': 'dbcreggsx',
-    'API_KEY': '485365791581239',
-    'API_SECRET': 'RPXYYE8bqJaY0ZTuyeGfw7sM3w8',
-}
-
-STORAGES = {
-    "default": {
-        "BACKEND": "cloudinary_storage.storage.MediaCloudinaryStorage",
-    },
-    "staticfiles": {
-      "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
-    },
-}
-
-DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-
-
-# 🌟Cloudinaryを黙らせつつ、WhiteNoiseの圧縮（全角スペースエラー）を回避する究極の1行
-STATICFILES_STORAGE = 'django.contrib.staticfiles.storage.StaticFilesStorage'
-
-
-
-# --- 静的ファイル・画像保存 ---
-STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
 CLOUDINARY_STORAGE = {
@@ -112,11 +84,8 @@ STORAGES = {
         "BACKEND": "cloudinary_storage.storage.MediaCloudinaryStorage",
     },
     "staticfiles": {
-        "BACKEND": "whitenoise.storage.CompressedStaticFilesStorage", # 🌟WhiteNoiseに戻す
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
     },
 }
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
-
-
