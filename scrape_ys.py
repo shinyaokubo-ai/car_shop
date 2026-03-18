@@ -8,11 +8,10 @@ from asgiref.sync import sync_to_async
 
 os.environ['DATABASE_URL'] = 'postgresql://neondb_owner:npg_rc2lj6yutPKS@ep-purple-mud-a1zso0n2-pooler.ap-southeast-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require'
 
-# 🌟追加：Cloudinaryに入るための3つの鍵
+# Cloudinaryに入るための3つの鍵
 os.environ['CLOUD_NAME'] = 'dbcreggsx'
 os.environ['CLOUD_API_KEY'] = '485365791581239'
 os.environ['CLOUD_API_SECRET'] = 'RPXYYE8bqJaY0ZTuyeGfw7sM3w8'
-
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings')
 django.setup()
@@ -24,26 +23,32 @@ def extract_price(text):
     num_str = re.sub(r'\D', '', text)
     return int(num_str) if num_str else 0
 
-# 🌟追加：画像をダウンロードしてCloudinaryに保存する専用機能
+# 🌟 画像をダウンロードしてCloudinaryに自動仕分け保存する機能
 @sync_to_async
 def save_car_images(car, image_urls):
     car.images.all().delete() # 古い画像をリセット
-    print(f"\n☁️ 画像をCloudinaryにアップロード中...（最大5枚 / 少し時間がかかります）")
+    print(f"\n☁️ 画像をCloudinaryにアップロード中...（最大15枚 / 少し時間がかかります）")
     
-    for idx, url in enumerate(image_urls[:5]): # 最初の5枚だけ保存する
+    # 🌟 最初の15枚（8+7）だけを処理する
+    for idx, url in enumerate(image_urls[:15]): 
         try:
             req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
             with urllib.request.urlopen(req) as response:
                 img_data = response.read()
-                img_name = f"{car.sku}_{idx}.jpg" # ファイル名を自動生成
-                img_type = 'exterior' if idx == 0 else 'other'
+                img_name = f"{car.sku}_{idx}.jpg"
                 
-                # ここでCloudinaryへの自動転送が発動！
+                # 🌟 美しいアルゴリズム：最初の8枚(0〜7)は外装、残りは内装！
+                if idx < 8:
+                    img_type = 'exterior'
+                else:
+                    img_type = 'interior'
+                
+                # Cloudinaryへの自動転送と、外装/内装ラベルの登録
                 car.images.create(
                     image=ContentFile(img_data, name=img_name),
                     image_type=img_type
                 )
-                print(f"   📸 画像 {idx+1}/5 枚目の保存完了！")
+                print(f"   📸 画像 {idx+1}/15 枚目の保存完了！({img_type}として登録)")
         except Exception as e:
             print(f"   ❌ 画像保存エラー: {e}")
 
@@ -74,38 +79,38 @@ async def run():
                     await button.click()
                     await page.wait_for_timeout(1000) 
 
-                content = await item.inner_text()
-                lines = [line.strip() for line in content.split('\n') if line.strip()]
+            content = await item.inner_text()
+            lines = [line.strip() for line in content.split('\n') if line.strip()]
+            
+            if len(lines) > 0:
+                title = lines[0]
+                if title == "基本仕様":
+                    for line in lines[1:]:
+                        parts = line.split()
+                        if len(parts) >= 2:
+                            car_data[parts[0]] = " ".join(parts[1:])
+                            
+                elif title in ["安全装備", "外装", "内装", "車歴書類", "ナビ・オーディオ", "外装・内装装備"]:
+                    tables = await item.locator('table').all()
+                    for table in tables:
+                        rows = await table.locator('tr').all()
+                        for i in range(0, len(rows) - 1, 2):
+                            header_cells = await rows[i].locator('td, th').all_inner_texts()
+                            value_cells = await rows[i+1].locator('td, th').all_inner_texts()
+                            for j, h_text in enumerate(header_cells):
+                                h_text = h_text.strip().replace('\xa0', '')
+                                if h_text:
+                                    v_text = value_cells[j].strip().replace('\xa0', '') if j < len(value_cells) else ""
+                                    equipment_data[h_text] = ('〇' in v_text or '○' in v_text)
                 
-                if len(lines) > 0:
-                    title = lines[0]
-                    if title == "基本仕様":
-                        for line in lines[1:]:
-                            parts = line.split()
-                            if len(parts) >= 2:
-                                car_data[parts[0]] = " ".join(parts[1:])
-                                
-                    elif title in ["安全装備", "外装", "内装", "車歴書類", "ナビ・オーディオ", "外装・内装装備"]:
-                        tables = await item.locator('table').all()
-                        for table in tables:
-                            rows = await table.locator('tr').all()
-                            for i in range(0, len(rows) - 1, 2):
-                                header_cells = await rows[i].locator('td, th').all_inner_texts()
-                                value_cells = await rows[i+1].locator('td, th').all_inner_texts()
-                                for j, h_text in enumerate(header_cells):
-                                    h_text = h_text.strip().replace('\xa0', '')
-                                    if h_text:
-                                        v_text = value_cells[j].strip().replace('\xa0', '') if j < len(value_cells) else ""
-                                        equipment_data[h_text] = ('〇' in v_text or '○' in v_text)
-                    
-                    elif "コメント" in title or "車両詳細" in title:
-                        comment_text = "\n".join(lines[1:])
-                    elif "標準装備" in title:
-                        standard_text = "\n".join(lines[1:])
-                    elif "オプション" in title:
-                        option_text = "\n".join(lines[1:])
-                    elif "社外" in title or "カスタム" in title:
-                        custom_text = "\n".join(lines[1:])
+                elif "コメント" in title or "車両詳細" in title:
+                    comment_text = "\n".join(lines[1:])
+                elif "標準装備" in title:
+                    standard_text = "\n".join(lines[1:])
+                elif "オプション" in title:
+                    option_text = "\n".join(lines[1:])
+                elif "社外" in title or "カスタム" in title:
+                    custom_text = "\n".join(lines[1:])
 
         print("💰 金額データを抽出中...")
         price_total = price_vehicle = price_misc = 0
@@ -117,13 +122,11 @@ async def run():
                 elif '車両価格' in line: price_vehicle = extract_price(line)
                 elif '諸費用' in line: price_misc = extract_price(line)
 
-        # 🌟追加：画像のURLをかき集める！
         print("🖼️ 画像URLを探索中...")
         image_urls = []
         img_locators = await page.locator('img').all()
         for img in img_locators:
             src = await img.get_attribute('src')
-            # static.wixstatic.com/media/ を含む画像だけをピックアップ
             if src and 'static.wixstatic.com/media/' in src and src not in image_urls:
                 image_urls.append(src)
 
@@ -140,7 +143,6 @@ async def run():
                 'price_total': price_total,
                 'price_vehicle': price_vehicle,
                 'price_misc': price_misc,
-                
                 'registration_year': car_data.get('初年度登録', ''),
                 'mileage': car_data.get('走行距離', ''),
                 'inspection': car_data.get('車検', ''),
@@ -232,7 +234,7 @@ async def run():
             }
         )
 
-        # 🌟追加：最後にCloudinaryへ画像をアップロード
+        # 🌟 最後にCloudinaryへ画像をアップロード
         if image_urls:
             await save_car_images(new_car, image_urls)
 
