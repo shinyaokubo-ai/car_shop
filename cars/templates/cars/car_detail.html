@@ -30,16 +30,18 @@
     <div class="row g-4 mb-5">
         <div class="col-lg-7">
             <div class="main-image mb-4 shadow rounded overflow-hidden bg-dark text-center">
-                {% if car.get_main_image_url %}
-                    <img id="mainDisplayImage" src="{{ car.get_main_image_url }}" class="img-fluid" style="max-height: 500px;">
+                {% with first_img=car.images.first %}
+                {% if first_img %}
+                    <img id="mainDisplayImage" src="{{ first_img.image.url }}" class="img-fluid" style="max-height: 500px;">
                 {% endif %}
+                {% endwith %}
             </div>
 
             <h6 class="fw-bold mt-4 mb-2"><i class="bi bi-camera"></i> 外装写真</h6>
             <div class="photo-scroll-container mb-4">
                 <button class="scroll-btn btn-prev" onclick="scrollRow('exterior', -200)">◀</button>
                 <div class="photo-row" id="exterior-row">
-                    {% for img in car.images.all %}{% if img.image_type == 'exterior' %}
+                    {% for img in car.images.all %}{% if img.image_type == 'exterior' or img.image_type == '外装' %}
                         <div class="photo-item" onclick="changeImage('{{ img.image.url }}')">
                             <img src="{{ img.image.url }}" class="img-fluid rounded border shadow-sm" style="height: 80px; width: 100%; object-fit: cover;">
                         </div>
@@ -52,7 +54,7 @@
             <div class="photo-scroll-container">
                 <button class="scroll-btn btn-prev" onclick="scrollRow('interior', -200)">◀</button>
                 <div class="photo-row" id="interior-row">
-                    {% for img in car.images.all %}{% if img.image_type == 'interior' %}
+                    {% for img in car.images.all %}{% if img.image_type == 'interior' or img.image_type == '内装' %}
                         <div class="photo-item" onclick="changeImage('{{ img.image.url }}')">
                             <img src="{{ img.image.url }}" class="img-fluid rounded border shadow-sm" style="height: 80px; width: 100%; object-fit: cover;">
                         </div>
@@ -90,6 +92,7 @@
     <ul class="nav nav-tabs mb-0" id="carTab" role="tablist">
         <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#spec">基本情報</button></li>
         <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#equipment">装備・機能</button></li>
+        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#extra-equipment">標準・OP・社外装備</button></li>
         <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#comment">車両コメント・詳細</button></li>
     </ul>
 
@@ -106,18 +109,14 @@
                 <div class="col"><small class="text-muted d-block">駆動方式</small><strong>{{ car.drive_system }}</strong></div>
                 <div class="col"><small class="text-muted d-block">ミッション</small><strong>{{ car.transmission }}</strong></div>
                 <div class="col"><small class="text-muted d-block">ミッション位置</small><strong>{{ car.transmission_pos }}</strong></div>
-                <div class="col"><small class="text-muted d-block">AI-SHIFT</small><strong>{% if car.has_ai_shift %}あり{% else %}なし{% endif %}</strong></div>
                 <div class="col"><small class="text-muted d-block">マニュアルモード</small><strong>{% if car.has_manual_mode %}あり{% else %}なし{% endif %}</strong></div>
                 <div class="col"><small class="text-muted d-block">生産国</small><strong>{{ car.production_country }}</strong></div>
                 <div class="col"><small class="text-muted d-block">新車時価格</small><strong>{{ car.new_car_price }}</strong></div>
                 <div class="col"><small class="text-muted d-block">乗車定員</small><strong>{{ car.capacity }}名</strong></div>
                 <div class="col"><small class="text-muted d-block">シート列数</small><strong>{{ car.seat_rows }}列</strong></div>
                 <div class="col"><small class="text-muted d-block">ドア数</small><strong>{{ car.door_count }}</strong></div>
-                <div class="col"><small class="text-muted d-block">4WS</small><strong>{{ car.four_ws_status }}</strong></div>
                 <div class="col"><small class="text-muted d-block">内装色</small><strong>{{ car.interior_color }}</strong></div>
                 <div class="col"><small class="text-muted d-block">生産期間</small><strong>{{ car.production_period }}</strong></div>
-                <div class="col"><small class="text-muted d-block">前トレッド</small><strong>{{ car.tread_front }}mm</strong></div>
-                <div class="col"><small class="text-muted d-block">後トレッド</small><strong>{{ car.tread_rear }}mm</strong></div>
             </div>
         </div>
 
@@ -180,7 +179,7 @@
             </div>
 
             <h6 class="fw-bold mb-3 border-bottom pb-2 text-info">ナビ・オーディオ</h6>
-            <div class="eq-grid">
+            <div class="eq-grid mb-5">
                 <div class="eq-tile {% if car.has_hdd_navi %}eq-on{% else %}eq-off{% endif %}">HDDナビ</div>
                 <div class="eq-tile {% if car.has_memory_navi %}eq-on{% else %}eq-off{% endif %}">メモリーナビ</div>
                 <div class="eq-tile {% if car.has_dvd_navi %}eq-on{% else %}eq-off{% endif %}">DVDナビ</div>
@@ -200,18 +199,8 @@
                 <div class="eq-tile {% if car.has_android_auto %}eq-on{% else %}eq-off{% endif %}">Android Auto</div>
             </div>
 
-            <div class="mt-4 pt-4 border-top">
-                {% if car.equipment_standard %}<div class="mb-4"><h6>標準装備</h6><div class="p-3 bg-light rounded small" style="white-space: pre-wrap;">{{ car.equipment_standard }}</div></div>{% endif %}
-                {% if car.equipment_option %}<div class="mb-4"><h6>オプション装備</h6><div class="p-3 bg-light rounded small" style="white-space: pre-wrap;">{{ car.equipment_option }}</div></div>{% endif %}
-                {% if car.equipment_custom %}<div class="mb-4"><h6>カスタム装備</h6><div class="p-3 bg-light rounded small" style="white-space: pre-wrap;">{{ car.equipment_custom }}</div></div>{% endif %}
-            </div>
-        </div>
-
-        <div class="tab-pane fade" id="comment">
-            <div class="mb-5 p-3 bg-white border rounded" style="white-space: pre-wrap; line-height: 1.8;">{{ car.comment }}</div>
-
             <h6 class="fw-bold mb-3 border-bottom pb-2">車歴・書類情報</h6>
-            <div class="eq-grid mb-5">
+            <div class="eq-grid">
                 <div class="eq-tile {% if car.has_one_owner %}eq-on{% else %}eq-off{% endif %}">ワンオーナー</div>
                 <div class="eq-tile {% if car.has_warranty %}eq-on{% else %}eq-off{% endif %}">保証書</div>
                 <div class="eq-tile {% if car.has_service_record %}eq-on{% else %}eq-off{% endif %}">整備手帳</div>
@@ -228,6 +217,33 @@
                 <div class="eq-tile {% if car.has_welfare %}eq-on{% else %}eq-off{% endif %}">福祉車両</div>
                 <div class="eq-tile {% if car.has_camper %}eq-on{% else %}eq-off{% endif %}">キャンピングカー</div>
             </div>
+        </div>
+
+        <div class="tab-pane fade" id="extra-equipment">
+            {% if car.equipment_standard %}
+            <div class="mb-4">
+                <h6 class="fw-bold text-dark border-bottom pb-2">標準装備</h6>
+                <div class="p-3 bg-light rounded small" style="white-space: pre-wrap;">{{ car.equipment_standard }}</div>
+            </div>
+            {% endif %}
+            
+            {% if car.equipment_option %}
+            <div class="mb-4">
+                <h6 class="fw-bold text-dark border-bottom pb-2">オプション装備</h6>
+                <div class="p-3 bg-light rounded small" style="white-space: pre-wrap;">{{ car.equipment_option }}</div>
+            </div>
+            {% endif %}
+            
+            {% if car.equipment_custom %}
+            <div class="mb-4">
+                <h6 class="fw-bold text-dark border-bottom pb-2">社外・カスタム装備</h6>
+                <div class="p-3 bg-light rounded small" style="white-space: pre-wrap;">{{ car.equipment_custom }}</div>
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="tab-pane fade" id="comment">
+            <div class="mb-5 p-3 bg-white border rounded" style="white-space: pre-wrap; line-height: 1.8;">{{ car.comment }}</div>
 
             {% if car.youtube_url %}
             <div class="d-grid pt-3 border-top">
