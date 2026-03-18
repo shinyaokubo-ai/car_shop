@@ -74,6 +74,7 @@ STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 # Cloudinaryの設定（昨日の状態＋安全装置）
 
+# Cloudinaryの設定（昨日の状態＋安全装置）
 CLOUDINARY_STORAGE = {
     'CLOUD_NAME': os.environ.get('CLOUD_NAME', 'dbcreggsx'),
     'API_KEY': os.environ.get('CLOUD_API_KEY', '485365791581239'),
