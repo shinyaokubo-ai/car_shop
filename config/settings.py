@@ -74,11 +74,10 @@ STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles' 
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
-CLOUDINARY_STORAGE = {
-    'CLOUD_NAME': os.environ.get('CLOUD_NAME'),
-    'API_KEY': os.environ.get('CLOUD_API_KEY'),
-    'API_SECRET': os.environ.get('CLOUD_API_SECRET'),
-}
+CLOUD_NAME: 'dbcreggsx',
+API_KEY: '485365791581239',
+API_SECRET: 'RPXYYE8bqJaY0ZTuyeGfw7sM3w8',
+
 
 STORAGES = {
     "default": {
