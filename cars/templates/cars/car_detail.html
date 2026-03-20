@@ -212,6 +212,25 @@
                 <div class="eq-tile {% if car.has_apple_carplay %}eq-on{% else %}eq-off{% endif %}">Apple CarPlay</div>
                 <div class="eq-tile {% if car.has_android_auto %}eq-on{% else %}eq-off{% endif %}">Android Auto</div>
             </div>
+
+            <h6 class="fw-bold mb-3 border-bottom pb-2">車歴・書類情報</h6>
+            <div class="eq-grid">
+                <div class="eq-tile {% if car.has_one_owner %}eq-on{% else %}eq-off{% endif %}">ワンオーナー</div>
+                <div class="eq-tile {% if car.has_warranty %}eq-on{% else %}eq-off{% endif %}">保証書</div>
+                <div class="eq-tile {% if car.has_service_record %}eq-on{% else %}eq-off{% endif %}">整備手帳</div>
+                <div class="eq-tile {% if car.has_record_book %}eq-on{% else %}eq-off{% endif %}">記録簿</div>
+                <div class="eq-tile {% if car.has_manual %}eq-on{% else %}eq-off{% endif %}">取扱説明書</div>
+                <div class="eq-tile {% if car.has_spare_key %}eq-on{% else %}eq-off{% endif %}">スペアキー</div>
+                <div class="eq-tile {% if car.has_no_smoking %}eq-on{% else %}eq-off{% endif %}">禁煙車</div>
+                <div class="eq-tile {% if car.has_pet_free %}eq-on{% else %}eq-off{% endif %}">ペット同乗なし</div>
+                <div class="eq-tile {% if car.has_rental_up %}eq-on{% else %}eq-off{% endif %}">レンタカー上がり</div>
+                <div class="eq-tile {% if car.has_dealer_car %}eq-on{% else %}eq-off{% endif %}">ディーラー車</div>
+                <div class="eq-tile {% if car.has_parallel_import %}eq-on{% else %}eq-off{% endif %}">並行輸入車</div>
+                <div class="eq-tile {% if car.has_registered_unused %}eq-on{% else %}eq-off{% endif %}">登録済未使用車</div>
+                <div class="eq-tile {% if car.has_cold_region %}eq-on{% else %}eq-off{% endif %}">寒冷地仕様</div>
+                <div class="eq-tile {% if car.has_welfare %}eq-on{% else %}eq-off{% endif %}">福祉車両</div>
+                <div class="eq-tile {% if car.has_camper %}eq-on{% else %}eq-off{% endif %}">キャンピングカー</div>
+            </div>
         </div>
 
         <div class="tab-pane fade" id="standard-content" role="tabpanel">
