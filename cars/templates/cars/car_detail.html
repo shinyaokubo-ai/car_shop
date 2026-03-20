@@ -84,21 +84,35 @@
             </div>
 
             <div class="d-grid gap-2">
-                <a href="tel:03-XXXX-XXXX" class="btn btn-danger btn-lg fw-bold py-3 shadow"><i class="bi bi-telephone-fill me-2"></i>問い合わせる</a>
+                <a href="tel:03-5672-2020" class="btn btn-danger btn-lg fw-bold py-3 shadow"><i class="bi bi-telephone-fill me-2"></i>問い合わせる</a>
             </div>
         </div>
     </div>
 
-    <ul class="nav nav-tabs mb-0" id="carTab" role="tablist">
-        <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#spec">基本情報</button></li>
-        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#equipment">装備・機能</button></li>
-        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#extra-equipment">標準・OP・社外装備</button></li>
-        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#comment">車両コメント・詳細</button></li>
+    <ul class="nav nav-tabs mt-4" id="carTab" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="basic-tab" data-bs-toggle="tab" data-bs-target="#basic-content" type="button" role="tab">基本情報</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="feature-tab" data-bs-toggle="tab" data-bs-target="#feature-content" type="button" role="tab">装備・機能</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="standard-tab" data-bs-toggle="tab" data-bs-target="#standard-content" type="button" role="tab">標準装備</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="option-tab" data-bs-toggle="tab" data-bs-target="#option-content" type="button" role="tab">オプション装備</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="custom-tab" data-bs-toggle="tab" data-bs-target="#custom-content" type="button" role="tab">社外装備</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="comment-tab" data-bs-toggle="tab" data-bs-target="#comment-content" type="button" role="tab">車両コメント・詳細</button>
+        </li>
     </ul>
 
     <div class="tab-content border-start border-end border-bottom p-4 bg-white shadow-sm rounded-bottom mb-5">
         
-        <div class="tab-pane fade show active" id="spec">
+        <div class="tab-pane fade show active" id="basic-content" role="tabpanel">
             <div class="row row-cols-2 row-cols-md-4 g-4">
                 <div class="col"><small class="text-muted d-block">ハンドル</small><strong>{{ car.handle }}</strong></div>
                 <div class="col"><small class="text-muted d-block">輸入経路</small><strong>{{ car.import_route }}</strong></div>
@@ -120,7 +134,7 @@
             </div>
         </div>
 
-        <div class="tab-pane fade" id="equipment">
+        <div class="tab-pane fade" id="feature-content" role="tabpanel">
             <h6 class="fw-bold mb-3 border-bottom pb-2 text-primary">安全・基本装備</h6>
             <div class="eq-grid">
                 <div class="eq-tile {% if car.has_aircon %}eq-on{% else %}eq-off{% endif %}">エアコン</div>
@@ -198,51 +212,21 @@
                 <div class="eq-tile {% if car.has_apple_carplay %}eq-on{% else %}eq-off{% endif %}">Apple CarPlay</div>
                 <div class="eq-tile {% if car.has_android_auto %}eq-on{% else %}eq-off{% endif %}">Android Auto</div>
             </div>
-
-            <h6 class="fw-bold mb-3 border-bottom pb-2">車歴・書類情報</h6>
-            <div class="eq-grid">
-                <div class="eq-tile {% if car.has_one_owner %}eq-on{% else %}eq-off{% endif %}">ワンオーナー</div>
-                <div class="eq-tile {% if car.has_warranty %}eq-on{% else %}eq-off{% endif %}">保証書</div>
-                <div class="eq-tile {% if car.has_service_record %}eq-on{% else %}eq-off{% endif %}">整備手帳</div>
-                <div class="eq-tile {% if car.has_record_book %}eq-on{% else %}eq-off{% endif %}">記録簿</div>
-                <div class="eq-tile {% if car.has_manual %}eq-on{% else %}eq-off{% endif %}">取扱説明書</div>
-                <div class="eq-tile {% if car.has_spare_key %}eq-on{% else %}eq-off{% endif %}">スペアキー</div>
-                <div class="eq-tile {% if car.has_no_smoking %}eq-on{% else %}eq-off{% endif %}">禁煙車</div>
-                <div class="eq-tile {% if car.has_pet_free %}eq-on{% else %}eq-off{% endif %}">ペット同乗なし</div>
-                <div class="eq-tile {% if car.has_rental_up %}eq-on{% else %}eq-off{% endif %}">レンタカー上がり</div>
-                <div class="eq-tile {% if car.has_dealer_car %}eq-on{% else %}eq-off{% endif %}">ディーラー車</div>
-                <div class="eq-tile {% if car.has_parallel_import %}eq-on{% else %}eq-off{% endif %}">並行輸入車</div>
-                <div class="eq-tile {% if car.has_registered_unused %}eq-on{% else %}eq-off{% endif %}">登録済未使用車</div>
-                <div class="eq-tile {% if car.has_cold_region %}eq-on{% else %}eq-off{% endif %}">寒冷地仕様</div>
-                <div class="eq-tile {% if car.has_welfare %}eq-on{% else %}eq-off{% endif %}">福祉車両</div>
-                <div class="eq-tile {% if car.has_camper %}eq-on{% else %}eq-off{% endif %}">キャンピングカー</div>
-            </div>
         </div>
 
-        <div class="tab-pane fade" id="extra-equipment">
-            {% if car.equipment_standard %}
-            <div class="mb-4">
-                <h6 class="fw-bold text-dark border-bottom pb-2">標準装備</h6>
-                <div class="p-3 bg-light rounded small" style="white-space: pre-wrap;">{{ car.equipment_standard }}</div>
-            </div>
-            {% endif %}
-            
-            {% if car.equipment_option %}
-            <div class="mb-4">
-                <h6 class="fw-bold text-dark border-bottom pb-2">オプション装備</h6>
-                <div class="p-3 bg-light rounded small" style="white-space: pre-wrap;">{{ car.equipment_option }}</div>
-            </div>
-            {% endif %}
-            
-            {% if car.equipment_custom %}
-            <div class="mb-4">
-                <h6 class="fw-bold text-dark border-bottom pb-2">社外・カスタム装備</h6>
-                <div class="p-3 bg-light rounded small" style="white-space: pre-wrap;">{{ car.equipment_custom }}</div>
-            </div>
-            {% endif %}
+        <div class="tab-pane fade" id="standard-content" role="tabpanel">
+            <div class="p-4 bg-light rounded" style="white-space: pre-wrap; line-height: 1.8;">{{ car.equipment_standard|default:"登録されている標準装備情報はありません。" }}</div>
         </div>
 
-        <div class="tab-pane fade" id="comment">
+        <div class="tab-pane fade" id="option-content" role="tabpanel">
+            <div class="p-4 bg-light rounded" style="white-space: pre-wrap; line-height: 1.8;">{{ car.equipment_option|default:"登録されているオプション装備情報はありません。" }}</div>
+        </div>
+
+        <div class="tab-pane fade" id="custom-content" role="tabpanel">
+            <div class="p-4 bg-light rounded" style="white-space: pre-wrap; line-height: 1.8;">{{ car.equipment_custom|default:"登録されている社外・カスタム装備情報はありません。" }}</div>
+        </div>
+
+        <div class="tab-pane fade" id="comment-content" role="tabpanel">
             <div class="mb-5 p-3 bg-white border rounded" style="white-space: pre-wrap; line-height: 1.8;">{{ car.comment }}</div>
 
             {% if car.youtube_url %}

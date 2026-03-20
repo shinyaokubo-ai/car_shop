@@ -11,3 +11,4 @@ def car_detail(request, pk):
     car = get_object_or_404(Car, pk=pk)
     # ここはシンプルに車データを渡すだけでOK。2列の振り分けはHTML側で行います。
     return render(request, 'cars/car_detail.html', {'car': car})
+

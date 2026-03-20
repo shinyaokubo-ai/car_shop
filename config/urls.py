@@ -15,35 +15,14 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.urls import path , include
-# ★以下の2行を追加してください
-from django.conf import settings
-from django.conf.urls.static import static
-
-
-
-
-urlpatterns = [
-    path('admin/', admin.site.urls),
-    path('', include('cars.urls')),
-]
-
-# ★このif文のブロックを「urlpatterns」の下に書き足してください
-if settings.DEBUG:
-    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
-
-
-
-from django.contrib import admin
-# ★ include を追加するのを忘れずに！
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    # ★ここに追加：carsアプリのURLを読み込む
-    path('', include('cars.urls')),
+    path('ai-assist/', include('ai_assist.urls')), # 🌟 AIアシストへの秘密の道！
+    path('', include('cars.urls')),                # 既存のWix用システムへの道
 ]
 
 # ★画像を表示するための魔法のコード（開発環境用）

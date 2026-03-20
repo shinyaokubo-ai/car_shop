@@ -24,6 +24,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'cloudinary',
     'cars',
+    'ai_assist',     # 🌟 これを追加！
 ]
 
 MIDDLEWARE = [
@@ -58,9 +59,11 @@ TEMPLATES = [
 WSGI_APPLICATION = 'config.wsgi.application'
 
 # --- データベース設定 (Neon PostgreSQL) ---
+# --- データベース設定 ---
+# Vercelでは本番DBを、自分のパソコンでは仮DB（sqlite3）を自動で使い分ける魔法のコード
 DATABASES = {
     'default': dj_database_url.config(
-        default=os.environ.get('DATABASE_URL')
+        default=os.environ.get('DATABASE_URL', f"sqlite:///{BASE_DIR / 'db.sqlite3'}")
     )
 }
 
