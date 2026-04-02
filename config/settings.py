@@ -1,7 +1,6 @@
 import os
 from pathlib import Path
 import dj_database_url
-import cloudinary
 
 # ベースディレクトリ
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -20,11 +19,12 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.humanize',
-    'cloudinary_storage',
+    # ❌ cloudinary_storage は削除しました
     'django.contrib.staticfiles',
-    'cloudinary',
+    # ❌ cloudinary は削除しました
+    'storages',      # 🌟 追加：Google Cloud Storageを使うための必須ライブラリ
     'cars',
-    'ai_assist',     # 🌟 これを追加！
+    'ai_assist',
 ]
 
 MIDDLEWARE = [
@@ -58,45 +58,64 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'config.wsgi.application'
 
-# --- データベース設定 (Neon PostgreSQL) ---
 # --- データベース設定 ---
-# Vercelでは本番DBを、自分のパソコンでは仮DB（sqlite3）を自動で使い分ける魔法のコード
 DATABASES = {
     'default': dj_database_url.config(
         default=os.environ.get('DATABASE_URL', f"sqlite:///{BASE_DIR / 'db.sqlite3'}")
     )
 }
 
-# タイムゾーン
 LANGUAGE_CODE = 'ja'
 TIME_ZONE = 'Asia/Tokyo'
 USE_I18N = True
 USE_TZ = True
 
-# --- 静的ファイル・画像保存 (Cloudinary / Whitenoise) ---
+# --- 静的ファイル・画像保存 (Google Cloud Storage / Whitenoise) ---
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
-CLOUDINARY_STORAGE = {
-    'CLOUD_NAME': os.environ.get('CLOUD_NAME'),
-    'API_KEY': os.environ.get('CLOUD_API_KEY'),
-    'API_SECRET': os.environ.get('CLOUD_API_SECRET'),
-}
+# GCPの認証鍵（gcp-key.json）を読み込む
+GCP_KEY_PATH = os.path.join(BASE_DIR, 'gcp-key.json')
+if os.path.exists(GCP_KEY_PATH):
+    os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = GCP_KEY_PATH
 
-STORAGES = {
-    "default": {
-        "BACKEND": "cloudinary_storage.storage.MediaCloudinaryStorage",
-    },
-    "staticfiles": {
-        "BACKEND": "whitenoise.storage.CompressedStaticFilesStorage",
-    },
-}
+# 開発環境（ローカル）か本番環境（Cloud Run）かを判定
+IS_PRODUCTION = os.environ.get('GOOGLE_CLOUD_PROJECT') is not None
+
+if IS_PRODUCTION or os.path.exists(GCP_KEY_PATH):
+    # --- 本番環境 または ローカル（鍵あり）の場合：Google Cloud Storageを使用 ---
+    DEFAULT_FILE_STORAGE = 'storages.backends.gcloud.GoogleCloudStorage'
+    
+    # ▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼
+    # 🌟 ここに先ほどGCPで確認したバケツ名を貼り付けてください！
+    GS_BUCKET_NAME = 'car-shop-media-0709'  
+    # ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+    
+    STORAGES = {
+        "default": {
+            "BACKEND": "storages.backends.gcloud.GoogleCloudStorage",
+        },
+        "staticfiles": {
+            "BACKEND": "whitenoise.storage.CompressedStaticFilesStorage",
+        },
+    }
+else:
+    # --- ローカル環境（鍵なし）の場合：パソコン内に保存 ---
+    MEDIA_URL = '/media/'
+    MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+    STORAGES = {
+        "default": {
+            "BACKEND": "django.core.files.storage.FileSystemStorage",
+        },
+        "staticfiles": {
+            "BACKEND": "whitenoise.storage.CompressedStaticFilesStorage",
+        },
+    }
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-# 🌟 Cloudinary本体に直接、Vercelの環境変数を読み込ませる設定
-cloudinary.config(
-    cloud_name = os.environ.get('CLOUD_NAME'),
-    api_key = os.environ.get('CLOUD_API_KEY'),
-    api_secret = os.environ.get('CLOUD_API_SECRET'),
-    secure = True
-)
+
+
+# --- セキュリティ設定（Cloud RunのURLを許可する） ---
+CSRF_TRUSTED_ORIGINS = [
+    'https://car-shop-app-572463964631.asia-northeast1.run.app',
+]

@@ -1,4 +1,4 @@
-from cloudinary.models import CloudinaryField
+# ▼▼ 変更箇所：使わなくなった CloudinaryField を削除しました ▼▼
 from django.db import models
 
 class Car(models.Model):
@@ -119,6 +119,10 @@ class Car(models.Model):
     youtube_url = models.URLField("YouTube URL", blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
+    # ▼▼▼ 新しく追加：公開/非公開のスイッチ（デフォルトはFalse＝非公開） ▼▼▼
+    is_published = models.BooleanField("公開する（チェックで本番表示）", default=False)
+    # ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+
     def __str__(self):
         return self.title
 
@@ -129,7 +133,11 @@ class Car(models.Model):
 class CarImage(models.Model):
     """ 車両の画像（複数枚）を保存するモデル """
     car = models.ForeignKey('Car', on_delete=models.CASCADE, related_name='images')
-    image = CloudinaryField('image')
+    
+    # ▼▼▼ 変更箇所：Cloudinaryの記述を消して、標準のImageFieldにする ▼▼▼
+    image = models.ImageField("画像ファイル", upload_to='car_images/')
+    # ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+    
     image_type = models.CharField(max_length=20, default='exterior')
 
     def __str__(self):

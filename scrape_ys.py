@@ -6,15 +6,19 @@ import urllib.request
 from playwright.async_api import async_playwright
 from asgiref.sync import sync_to_async
 
+# Neonデータベースへの接続鍵（これはそのまま使います）
 os.environ['DATABASE_URL'] = 'postgresql://neondb_owner:npg_rc2lj6yutPKS@ep-purple-mud-a1zso0n2-pooler.ap-southeast-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require'
 
-# Cloudinaryに入るための3つの鍵
-os.environ['CLOUD_NAME'] = 'dbcreggsx'
-os.environ['CLOUD_API_KEY'] = '485365791581239'
-os.environ['CLOUD_API_SECRET'] = 'RPXYYE8bqJaY0ZTuyeGfw7sM3w8'
+# ❌ 以前ここにあったCloudinaryの3つの鍵は削除しました！
+# （代わりに、settings.pyが自動的に「gcp-key.json」を読み込んでGoogle Cloudへ画像をアップしてくれます）
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings')
 django.setup()
+
+# ▼▼▼ 追加する2行 ▼▼▼
+from django.core.management import call_command
+call_command('migrate')  # 強制的にマイグレーションを実行する！
+# ▲▲▲▲▲▲▲▲▲▲▲
 
 from cars.models import Car
 from django.core.files.base import ContentFile
@@ -23,11 +27,11 @@ def extract_price(text):
     num_str = re.sub(r'\D', '', text)
     return int(num_str) if num_str else 0
 
-# 🌟 画像をダウンロードしてCloudinaryに自動仕分け保存する機能
+# 🌟 画像をダウンロードしてGoogle Cloud Storageに自動保存する機能
 @sync_to_async
 def save_car_images(car, image_urls):
     car.images.all().delete() # 古い画像をリセット
-    print(f"\n☁️ 画像をCloudinaryにアップロード中...（最大15枚 / 少し時間がかかります）")
+    print(f"\n☁️ 画像をGoogle Cloud Storageにアップロード中...（最大15枚 / 少し時間がかかります）")
     
     # 🌟 最初の15枚（8+7）だけを処理する
     for idx, url in enumerate(image_urls[:15]): 
@@ -43,7 +47,7 @@ def save_car_images(car, image_urls):
                 else:
                     img_type = 'interior'
                 
-                # Cloudinaryへの自動転送と、外装/内装ラベルの登録
+                # Google Cloudへの自動転送と、外装/内装ラベルの登録
                 car.images.create(
                     image=ContentFile(img_data, name=img_name),
                     image_type=img_type
@@ -234,11 +238,12 @@ async def run():
             }
         )
 
-        # 🌟 最後にCloudinaryへ画像をアップロード
+        # 🌟 最後にGoogle Cloud Storageへ画像をアップロード
         if image_urls:
             await save_car_images(new_car, image_urls)
 
         print("✅ すべての処理が完了しました！")
         await browser.close()
 
-asyncio.run(run())
+if __name__ == "__main__":
+    asyncio.run(run())
