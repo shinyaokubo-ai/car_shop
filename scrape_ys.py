@@ -12,6 +12,13 @@ os.environ['DATABASE_URL'] = 'postgresql://neondb_owner:npg_rc2lj6yutPKS@ep-purp
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings')
 django.setup()
 
+# ▼▼▼ 追加：ローカルから実行しても強制的にGCPへ画像を保存させる命令 ▼▼▼
+from django.conf import settings
+settings.DEFAULT_FILE_STORAGE = 'storages.backends.gcloud.GoogleCloudStorage'
+settings.GS_BUCKET_NAME = 'car-shop-media-0709' # スクショから確認した慎也さんのバケット名
+# ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+
+
 from django.core.management import call_command
 call_command('migrate')  # 強制的にマイグレーションを実行する！
 
