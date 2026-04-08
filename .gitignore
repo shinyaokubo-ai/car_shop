@@ -7,3 +7,6 @@ __pycache__/
 db.sqlite3
 
 .env
+
+# メディアファイル入れるのを防ぐ
+media/
