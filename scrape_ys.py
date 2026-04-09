@@ -1,3 +1,5 @@
+
+
 import os
 import re
 import django
@@ -6,21 +8,22 @@ import urllib.request
 from playwright.async_api import async_playwright
 from asgiref.sync import sync_to_async
 
+# ▼ GCPの警備員に身分証明書（鍵）を提示する！
+os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = 'gcp-key.json'
+
 # Neonデータベースへの接続鍵
 os.environ['DATABASE_URL'] = 'postgresql://neondb_owner:npg_rc2lj6yutPKS@ep-purple-mud-a1zso0n2-pooler.ap-southeast-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require'
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings')
 django.setup()
 
-# ▼▼▼ 追加：ローカルから実行しても強制的にGCPへ画像を保存させる命令 ▼▼▼
-from django.conf import settings
-settings.DEFAULT_FILE_STORAGE = 'storages.backends.gcloud.GoogleCloudStorage'
-settings.GS_BUCKET_NAME = 'car-shop-media-0709' # スクショから確認した慎也さんのバケット名
-# ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
-
+# ▼ パソコンからでも強制的にGCP（Cloud Storage）へ画像を保存する設定
+from storages.backends.gcloud import GoogleCloudStorage
+from cars.models import CarImage
+CarImage._meta.get_field('image').storage = GoogleCloudStorage()
 
 from django.core.management import call_command
-call_command('migrate')  # 強制的にマイグレーションを実行する！
+call_command('migrate')  # 強制的にマイグレーションを実行
 
 from cars.models import Car
 from django.core.files.base import ContentFile
@@ -128,13 +131,11 @@ async def run():
         for img in img_locators:
             src = await img.get_attribute('src')
             if src and 'static.wixstatic.com/media/' in src and src not in image_urls:
-                # 🌟 ロゴやアイコンを除外する処理
                 if 'logo' in src.lower() or 'icon' in src.lower():
                     continue
                 image_urls.append(src)
         
-        # 🌟 念のための保険（もし1枚目がどうしてもロゴになってしまう場合、先頭をカット）
-        if len(image_urls) > 0 and '1b3d68_' in image_urls[0]: # Y'sさんのロゴの特有のファイル名を弾く
+        if len(image_urls) > 0 and '1b3d68_' in image_urls[0]:
              image_urls = image_urls[1:]
 
         tread_str = car_data.get('前トレッド/後トレッド', '')
@@ -180,7 +181,65 @@ async def run():
                 'equipment_option': option_text,
                 'equipment_custom': custom_text,
                 
-                # ▼▼ 新しく追加したフラグ（Falseのままなので非公開になります） ▼▼
+                # ▼▼ 完全に復活させた装備データ！ ▼▼
+                'has_aircon': equipment_data.get('エアコン', False),
+                'has_power_steering': equipment_data.get('パワステ', False) or equipment_data.get('パワーステアリング', False),
+                'has_power_window': equipment_data.get('パワーウィンドウ', False),
+                'has_airbag': equipment_data.get('エアバック', False),
+                'has_abs': equipment_data.get('ABS', False),
+                'has_esc': equipment_data.get('ESC(横滑り防止)', False) or equipment_data.get('ESC', False),
+                'has_collision_safety': equipment_data.get('衝突被害軽減システム', False) or equipment_data.get('衝突被害軽減ブレーキ', False),
+                'has_lane_assist': equipment_data.get('レーンアシスト', False),
+                'has_park_assist': equipment_data.get('パークアシスト', False),
+                'has_auto_parking': equipment_data.get('自動駐車システム', False),
+                'has_cruise_control': equipment_data.get('クルーズコントロール', False),
+                'has_keyless': equipment_data.get('キーレスエントリー', False) or equipment_data.get('キーレス', False),
+                'has_smart_key': equipment_data.get('スマートキー', False),
+                'has_etc': equipment_data.get('ETC', False),
+                'has_back_camera': equipment_data.get('バックカメラ', False),
+                'has_camera_360': equipment_data.get('全周囲カメラ', False),
+                'has_auto_highbeam': equipment_data.get('オートマチックハイビーム', False),
+                'has_auto_light': equipment_data.get('オートライト', False),
+                'has_fog_lamp': equipment_data.get('フォグランプ', False),
+                
+                'has_sunroof': equipment_data.get('サンルーフ', False),
+                'has_leather_seat': equipment_data.get('革シート', False),
+                'has_aluminum_wheel': equipment_data.get('アルミホイール', False),
+                'has_aero_parts': equipment_data.get('エアロパーツ', False),
+                'has_low_down': equipment_data.get('ローダウン', False),
+                'has_lift_up': equipment_data.get('リフトアップ', False),
+                'has_power_gate': equipment_data.get('電動リアゲート', False),
+                'has_led_headlight': equipment_data.get('LEDヘッドライト', False),
+                'has_hid_headlight': equipment_data.get('HIDヘッドライト', False),
+                'has_seat_heater': equipment_data.get('シートヒーター', False),
+                'has_power_seat': equipment_data.get('パワーシート', False),
+                'has_seat_aircon': equipment_data.get('シートエアコン', False),
+                'has_half_leather_seat': equipment_data.get('ハーフレザーシート', False),
+                'has_custom_muffler': equipment_data.get('社外マフラー', False),
+                'has_full_aero': equipment_data.get('フルエアロ', False),
+                'has_runflat_tire': equipment_data.get('ランフラットタイヤ', False),
+                
+                'has_hdd_navi': equipment_data.get('HDDナビ', False),
+                'has_memory_navi': equipment_data.get('メモリーナビ', False),
+                'has_fullseg_tv': equipment_data.get('フルセグTV', False),
+                'has_bluetooth': equipment_data.get('Bluetooth接続', False),
+                'has_dvd': equipment_data.get('DVD再生', False) or equipment_data.get('DVD', False),
+                'has_music_server': equipment_data.get('ミュージックサーバー', False),
+                'has_usb_input': equipment_data.get('USB入力端子', False),
+                'has_music_player': equipment_data.get('ミュージックプレイヤー接続', False),
+                'has_cd': equipment_data.get('CD再生', False) or equipment_data.get('CD', False),
+                'has_rear_monitor': equipment_data.get('後席モニター', False),
+                
+                'has_4wd_check': equipment_data.get('4WD', False),
+                'has_diesel': equipment_data.get('ディーゼル', False),
+                'has_one_owner': equipment_data.get('ワンオーナー', False),
+                'has_warranty': equipment_data.get('保証書', False),
+                'has_service_record': equipment_data.get('整備手帳', False),
+                'has_record_book': equipment_data.get('記録簿', False),
+                'has_manual': equipment_data.get('取扱説明書', False),
+                'has_spare_key': equipment_data.get('スペアキー', False),
+
+                # 自動公開防止フラグ
                 'is_published': False, 
             }
         )

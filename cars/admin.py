@@ -63,5 +63,4 @@ class CarAdmin(admin.ModelAdmin):
         }),
     )
 
-# デコレータを使ったので、元々一番下にあった admin.site.register(Car, CarAdmin) は不要になり消しました。
-admin.site.register(CarImage)
+

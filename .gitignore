@@ -10,3 +10,5 @@ db.sqlite3
 
 # メディアファイル入れるのを防ぐ
 media/
+
+gcp-key.json
