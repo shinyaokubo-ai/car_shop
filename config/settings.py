@@ -19,9 +19,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.humanize',
-    # ❌ cloudinary_storage は削除しました
     'django.contrib.staticfiles',
-    # ❌ cloudinary は削除しました
     'storages',      # 🌟 追加：Google Cloud Storageを使うための必須ライブラリ
     'cars',
     'ai_assist',
@@ -86,10 +84,10 @@ if IS_PRODUCTION or os.path.exists(GCP_KEY_PATH):
     # --- 本番環境 または ローカル（鍵あり）の場合：Google Cloud Storageを使用 ---
     DEFAULT_FILE_STORAGE = 'storages.backends.gcloud.GoogleCloudStorage'
     
-    # ▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼
-    # 🌟 ここに先ほどGCPで確認したバケツ名を貼り付けてください！
     GS_BUCKET_NAME = 'car-shop-media-0709'  
-    # ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+    
+    # 🌟 修正ポイント：GCPのバケットから直接画像を読み込むための設定を追加
+    MEDIA_URL = f"https://storage.googleapis.com/{GS_BUCKET_NAME}/"
     
     STORAGES = {
         "default": {
@@ -113,7 +111,6 @@ else:
     }
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-
 
 # --- セキュリティ設定（Cloud RunのURLを許可する） ---
 CSRF_TRUSTED_ORIGINS = [
