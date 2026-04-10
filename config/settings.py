@@ -116,3 +116,6 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 CSRF_TRUSTED_ORIGINS = [
     'https://car-shop-app-572463964631.asia-northeast1.run.app',
 ]
+
+# settings.py の一番最後にこれを追記して上書き保存！
+MEDIA_URL = 'https://storage.googleapis.com/car-shop-media-0709/'

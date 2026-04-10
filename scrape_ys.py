@@ -1,5 +1,6 @@
 import os
 import re
+import time  # 🌟 時間を取得するライブラリを追加！
 import django
 import asyncio
 import urllib.request
@@ -34,14 +35,18 @@ def save_car_images(car, image_urls):
     car.images.all().delete()
     print(f"\n☁️ 画像をGoogle Cloud Storageにアップロード中...")
     
+    # 🌟 幽霊対策：現在の「秒数」を取得
+    current_time = int(time.time())
+    
     for idx, url in enumerate(image_urls[:15]): 
         try:
             req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
             with urllib.request.urlopen(req) as response:
                 img_data = response.read()
                 
-                # 名前の衝突を避けるためのシンプルな形式
-                img_name = f"{car.sku}_{idx}.jpg"
+                # 🌟 名前を毎回変える！（例：AUTO-MACAN-TEST_1712345678_0.jpg）
+                # これでブラウザは「知らない名前だ！新しく読み込もう！」と動きます
+                img_name = f"{car.sku}_{current_time}_{idx}.jpg"
                 
                 img_type = 'exterior' if idx < 8 else 'interior'
                 
@@ -119,7 +124,7 @@ async def run():
             src = await img.get_attribute('src') or ""
             if 'static.wixstatic.com/media/' in src:
                 high_res_url = src.split('/v1/')[0]
-                # 🚫 ロゴ徹底排除（慎也さんが特定してくれたIDをすべて含んでいます）
+                # 🚫 ロゴ徹底排除（慎也さんが特定してくれたID）
                 if any(bad in high_res_url.lower() for bad in ['cd0e5d', '9c93405', '.png', 'logo']): continue
                 if high_res_url not in image_urls: image_urls.append(high_res_url)
 
