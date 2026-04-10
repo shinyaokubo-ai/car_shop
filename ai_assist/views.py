@@ -3,6 +3,7 @@ from django.http import HttpResponse
 from google import genai
 import os
 import json
+import datetime  # 🌟 追加：現在の日時を取得するためのライブラリ
 from dotenv import load_dotenv
 from cars.models import Car 
 
@@ -24,17 +25,25 @@ def index(request):
                         if not data_dict.get(key) or str(data_dict[key]).isdigit() == False:
                             data_dict[key] = 0
                     
-                    # 🌟 2. 文字項目のカラッポ対策（NOT NULLエラー回避）
+                    # 2. 文字項目のカラッポ対策（NOT NULLエラー回避）
                     text_fields = ['title', 'sku', 'registration_year', 'mileage', 'inspection', 'model_code', 'body_color']
                     for key in text_fields:
                         if not data_dict.get(key):  # もしAIが読み取れず空っぽだったら...
                             data_dict[key] = "不明"  # 「不明」という文字を入れてあげる！
+
+                    # 🌟 3. 追加：管理番号（SKU）の重複エラーを絶対に防ぐ「根本治療」
+                    # もしAIがSKUを見つけられず「不明」になっていたら、今の時間から専用の番号を作る！
+                    if data_dict.get('sku') == "不明":
+                        now = datetime.datetime.now()
+                        # 例：AI-20260410-132048 という絶対にカブらない名前になる
+                        data_dict['sku'] = f"AI-{now.strftime('%Y%m%d-%H%M%S')}"
 
                     # 🚀 データベースへ保存！ (**data_dict で各項目に自動配分されます)
                     new_car = Car.objects.create(**data_dict)
                     
                     # 🌟 成功したら「success.html」へ移動
                     return render(request, 'ai_assist/success.html', {'car': new_car})
+                
                 except Exception as e:
                     # 🌟 登録エラー時の画面（戻るボタン付き）
                     error_html = f"""
