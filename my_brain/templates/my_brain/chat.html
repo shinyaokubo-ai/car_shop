@@ -3,44 +3,60 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>慎也の分身ボット</title>
+    <title>慎也の分身ボット（マルチモーダル）</title>
     <style>
         body { font-family: sans-serif; background: #f0f2f5; margin: 0; padding: 20px; }
         #chat-box { max-width: 600px; margin: auto; background: white; border-radius: 12px; height: 80vh; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
         #messages { flex: 1; overflow-y: auto; padding: 20px; }
-        .msg { margin-bottom: 15px; padding: 10px 15px; border-radius: 18px; max-width: 80%; line-height: 1.4; }
+        .msg { margin-bottom: 15px; padding: 10px 15px; border-radius: 18px; max-width: 80%; line-height: 1.4; white-space: pre-wrap; }
         .user { align-self: flex-end; background: #0084ff; color: white; margin-left: auto; }
         .bot { align-self: flex-start; background: #e4e6eb; color: black; }
-        #input-area { display: flex; padding: 15px; border-top: 1px solid #ddd; }
+        #input-area { display: flex; flex-direction: column; padding: 15px; border-top: 1px solid #ddd; gap: 10px; }
+        .input-row { display: flex; gap: 10px; }
         #user-input { flex: 1; border: 1px solid #ddd; border-radius: 20px; padding: 10px 15px; outline: none; }
-        button { background: #0084ff; color: white; border: none; padding: 10px 20px; border-radius: 20px; margin-left: 10px; cursor: pointer; }
+        #file-input { font-size: 0.8em; }
+        button { background: #0084ff; color: white; border: none; padding: 10px 20px; border-radius: 20px; cursor: pointer; }
+        button:hover { background: #0073e6; }
     </style>
 </head>
 <body>
 
 <div id="chat-box">
     <div id="messages">
-        <div class="msg bot">慎也です。スパイスや自炊、身体作りについて語りましょう。</div>
+        <div class="msg bot">慎也です。画像も送れるようになりました。スパイスの相談でも何でもどうぞ。</div>
     </div>
     <div id="input-area">
-        <input type="text" id="user-input" placeholder="メッセージを入力...">
-        <button onclick="send()">送信</button>
+        <input type="file" id="file-input" accept="image/*,application/pdf">
+        <div class="input-row">
+            <input type="text" id="user-input" placeholder="メッセージを入力...">
+            <button onclick="send()">送信</button>
+        </div>
     </div>
 </div>
 
 <script>
     async function send() {
         const input = document.getElementById('user-input');
+        const fileInput = document.getElementById('file-input');
         const text = input.value.trim();
-        if (!text) return;
+        const file = fileInput.files[0];
 
-        appendMsg('user', text);
+        if (!text && !file) return;
+
+        appendMsg('user', text + (file ? `\n(ファイルを送信中: ${file.name})` : ''));
         input.value = '';
+        fileInput.value = ''; // 送信後にクリア
+
+        // 画像を送るために FormData を使用する
+        const formData = new FormData();
+        formData.append('message', text);
+        if (file) {
+            formData.append('file', file);
+        }
 
         const res = await fetch('/my_brain/api/chat/', {
             method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({message: text})
+            body: formData // JSONではなくFormDataで送る
         });
         const data = await res.json();
         appendMsg('bot', data.reply || data.error);
@@ -51,20 +67,13 @@
         div.className = `msg ${sender}`;
         div.innerText = text;
         document.getElementById('messages').appendChild(div);
-        document.getElementById('messages').scrollTop = document.getElementById('messages').scrollHeight;
+        const box = document.getElementById('messages');
+        box.scrollTop = box.scrollHeight;
     }
 
-    // 入力欄でエンターキーが押された時の処理
-// 入力欄でエンターキーが押された時の処理
-document.getElementById('user-input').addEventListener('keypress', function (e) {
-    if (e.key === 'Enter') {
-        send(); // ⭕️ 正しい関数名に修正
-    }
-});
-
-
-
-
+    document.getElementById('user-input').addEventListener('keypress', function (e) {
+        if (e.key === 'Enter') { send(); }
+    });
 </script>
 </body>
 </html>
