@@ -22,3 +22,5 @@ gunicorn
 django-storages
 google-genai
 python-dotenv
+google-generativeai
+google-cloud-storage

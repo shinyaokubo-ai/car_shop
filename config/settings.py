@@ -23,6 +23,7 @@ INSTALLED_APPS = [
     'storages',      # 🌟 追加：Google Cloud Storageを使うための必須ライブラリ
     'cars',
     'ai_assist',
+    'my_brain', # 今回作るアプリを追加
 ]
 
 MIDDLEWARE = [
@@ -119,3 +120,11 @@ CSRF_TRUSTED_ORIGINS = [
 
 # settings.py の一番最後にこれを追記して上書き保存！
 MEDIA_URL = 'https://storage.googleapis.com/car-shop-media-0709/'
+
+# キャッシュの設定（ローカルメモリを使用）
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': 'shinya-brain-cache',
+    }
+}
