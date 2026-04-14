@@ -53,6 +53,18 @@
         document.getElementById('messages').appendChild(div);
         document.getElementById('messages').scrollTop = document.getElementById('messages').scrollHeight;
     }
+
+    // 入力欄でエンターキーが押された時の処理
+// 入力欄でエンターキーが押された時の処理
+document.getElementById('user-input').addEventListener('keypress', function (e) {
+    if (e.key === 'Enter') {
+        send(); // ⭕️ 正しい関数名に修正
+    }
+});
+
+
+
+
 </script>
 </body>
 </html>
