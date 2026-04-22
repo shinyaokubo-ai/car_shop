@@ -7,7 +7,14 @@ from django.core.cache import cache
 from google.cloud import storage
 import google.generativeai as genai
 
+# 🌟 追加：先ほど作ったデータベースの箱（モデル）を読み込む
+from .models import ChatLog
+
 genai.configure(api_key=os.environ.get("GEMINI_API_KEY"))
+
+# 🌟 追加：画面を表示するための関数（これが消えていたためエラーになっていました！）
+def chat_interface(request):
+    return render(request, 'my_brain/chat.html')
 
 def get_shinya_knowledge():
     """GCSから知識を自動取得。無関係なファイルを読み込まないようフィルタリングも可能"""
@@ -96,6 +103,12 @@ def api_chat(request):
             
             prompt_parts = [user_message] + knowledge["media_parts"]
             response = model.generate_content(prompt_parts)
+            
+            # 🌟🌟 核心部：データベース（ChatLog）に会話を保存する！ 🌟🌟
+            ChatLog.objects.create(
+                user_message=user_message,
+                ai_response=response.text
+            )
             
             return JsonResponse({"reply": response.text})
             
