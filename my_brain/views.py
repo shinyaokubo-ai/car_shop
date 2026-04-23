@@ -1,5 +1,7 @@
 import os
 import json
+import uuid
+from django.utils import timezone
 from django.shortcuts import render
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
@@ -7,44 +9,32 @@ from django.core.cache import cache
 from google.cloud import storage
 import google.generativeai as genai
 
-# 🌟 追加：先ほど作ったデータベースの箱（モデル）を読み込む
 from .models import ChatLog
 
 genai.configure(api_key=os.environ.get("GEMINI_API_KEY"))
 
-# 🌟 追加：画面を表示するための関数（これが消えていたためエラーになっていました！）
 def chat_interface(request):
     return render(request, 'my_brain/chat.html')
 
 def get_shinya_knowledge():
     """GCSから知識を自動取得。無関係なファイルを読み込まないようフィルタリングも可能"""
     knowledge = cache.get("shinya_multi_knowledge")
-    
     if not knowledge:
         BUCKET_NAME = "car-shop-media-0709"
         FOLDER_PREFIX = "brain_files/"
-        
         try:
             client = storage.Client()
             bucket = client.bucket(BUCKET_NAME)
-            
             media_parts = []
             text_data = ""
-            
             blobs = bucket.list_blobs(prefix=FOLDER_PREFIX)
-            
             for blob in blobs:
                 if blob.name == FOLDER_PREFIX or blob.name.endswith('/'):
                     continue
-                
                 name_lower = blob.name.lower()
-                
-                # テキストファイル読み込み
                 if name_lower.endswith('.txt'):
                     text_data += blob.download_as_text() + "\n\n"
                     continue
-                
-                # 画像・PDF読み込み
                 mime_type = None
                 if name_lower.endswith(('.jpg', '.jpeg')):
                     mime_type = "image/jpeg"
@@ -52,23 +42,16 @@ def get_shinya_knowledge():
                     mime_type = "image/png"
                 elif name_lower.endswith('.pdf'):
                     mime_type = "application/pdf"
-                    
                 if mime_type:
                     media_parts.append({
                         "mime_type": mime_type,
                         "data": blob.download_as_bytes()
                     })
-            
-            knowledge = {
-                "text": text_data,
-                "media_parts": media_parts
-            }
+            knowledge = {"text": text_data, "media_parts": media_parts}
             cache.set("shinya_multi_knowledge", knowledge, 3600)
-            
         except Exception as e:
             print("【GCSエラー発生】", str(e))
             return None
-            
     return knowledge
 
 @csrf_exempt
@@ -77,17 +60,15 @@ def api_chat(request):
         try:
             user_message = ""
             uploaded_file = None
+            public_url = "" # 🌟 GCSの画像URLを保存する変数
 
-            # 🌟修正1：荷物の種類（文字か画像か）を事前にチェックして仕分ける
+            # 荷物の仕分け
             if "application/json" in request.content_type:
-                # 文字だけの場合
                 data = json.loads(request.body.decode('utf-8'))
                 user_message = data.get("message", "")
             else:
-                # 画像などのファイルが添付されている場合
                 user_message = request.POST.get("message", "")
                 if request.FILES:
-                    # 添付ファイルをキャッチ
                     uploaded_file = list(request.FILES.values())[0]
 
             if not user_message and not uploaded_file:
@@ -96,6 +77,22 @@ def api_chat(request):
             knowledge = get_shinya_knowledge()
             if not knowledge:
                 return JsonResponse({"reply": "記憶にアクセスできないな。設定を確認してくれ。"})
+
+            # 🌟 追加：画像をGCSに保存する処理
+            if uploaded_file:
+                client = storage.Client()
+                bucket = client.bucket("car-shop-media-0709")
+                # ファイル名が被らないように日時とランダムな文字を付ける
+                ext = os.path.splitext(uploaded_file.name)[1]
+                filename = f"chat_uploads/{timezone.now().strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4().hex[:6]}{ext}"
+                blob = bucket.blob(filename)
+                
+                # GCSにアップロード
+                blob.upload_from_file(uploaded_file, content_type=uploaded_file.content_type)
+                public_url = f"https://storage.googleapis.com/car-shop-media-0709/{filename}"
+                
+                # Geminiに渡すためにファイルの読み込み位置を最初に戻す
+                uploaded_file.seek(0)
 
             system_instruction = f"""
             あなたは「慎也」の分身です。以下のこだわりを信念として持っています。
@@ -115,32 +112,23 @@ def api_chat(request):
                 system_instruction=system_instruction
             )
             
-            # 🌟修正2：Geminiに送るプロンプトを組み立てる（文字＋アップロード画像＋知識）
             prompt_parts = []
             if user_message:
                 prompt_parts.append(user_message)
-            
-            # 画像があれば、Geminiの目に直接見せる
             if uploaded_file:
                 prompt_parts.append({
                     "mime_type": uploaded_file.content_type,
                     "data": uploaded_file.read()
                 })
-                
             prompt_parts.extend(knowledge["media_parts"])
             
             response = model.generate_content(prompt_parts)
             
-            # 🌟🌟 データベース（ChatLog）に会話を保存する！ 🌟🌟
-            from .models import ChatLog
-            
-            # DBのfile_url欄には、とりあえず「ファイル名」を記録しておく
-            file_info = f"添付画像あり: {uploaded_file.name}" if uploaded_file else ""
-            
+            # 🌟🌟 データベース（ChatLog）に保存する
             ChatLog.objects.create(
                 user_message=user_message,
                 ai_response=response.text,
-                file_url=file_info  # 管理画面で「画像が送られたこと」がわかるようにする
+                file_url=public_url # 🌟ここにGCSのURLが入る！
             )
             
             return JsonResponse({"reply": response.text})
