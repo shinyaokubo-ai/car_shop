@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>慎也の分身ボット（マルチモーダル）</title>
+    <title>慎也の分身ボット（爆速ストリーミング版）</title>
     <style>
         body { font-family: sans-serif; background: #f0f2f5; margin: 0; padding: 20px; }
         #chat-box { max-width: 600px; margin: auto; background: white; border-radius: 12px; height: 80vh; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
@@ -23,7 +23,7 @@
 
 <div id="chat-box">
     <div id="messages">
-        <div class="msg bot">慎也です。画像も送れるようになりました。スパイスの相談でも何でもどうぞ。</div>
+        <div class="msg bot">慎也です。SSEストリーミングを導入して爆速になりました。何かあればどうぞ。</div>
     </div>
     <div id="input-area">
         <input type="file" id="file-input" accept="image/*,application/pdf">
@@ -43,12 +43,11 @@
 
         if (!text && !file) return;
 
-        // ユーザーの送信メッセージを画面に表示
+        // ユーザーの質問を表示
         appendMsg('user', text + (file ? `\n(ファイルを送信中: ${file.name})` : ''));
         input.value = '';
-        fileInput.value = ''; // 送信後にクリア
+        fileInput.value = ''; 
 
-        // データをまとめる
         const formData = new FormData();
         formData.append('message', text);
         if (file) {
@@ -56,51 +55,57 @@
         }
 
         try {
-            // 🌟バックエンドへ送信（JSONを待つのではなく、そのままfetchする）
-            const response = await fetch('/my_brain/api/chat/', {
+            // 🌟 fetch 開始
+            const response = await fetch('/my_brain/api_chat/', {
                 method: 'POST',
                 body: formData
             });
 
-            // 🌟パラパラ処理スタート
-            // 1. AIの空の吹き出しを先に作る
+            // AIの吹き出しを先に作っておく
             const aiDiv = document.createElement('div');
-            aiDiv.className = 'msg bot'; // 大久保さんのCSSクラス名「bot」を指定
+            aiDiv.className = 'msg bot';
             aiDiv.innerText = "慎也思考中..."; 
             document.getElementById('messages').appendChild(aiDiv);
             
             const box = document.getElementById('messages');
             box.scrollTop = box.scrollHeight;
 
-            // 2. 届いたデータをパラパラ読み込む準備
+            // 🌟 大久保式：ストリーミング・バケツリレー
             const reader = response.body.getReader();
             const decoder = new TextDecoder("utf-8");
             let isFirstChunk = true;
 
-            // 3. ループして1文字ずつ画面に追加していく！
             while (true) {
                 const { done, value } = await reader.read();
-                if (done) break; // 全部終わったらストップ
-
+                if (done) break; 
+                
                 const chunk = decoder.decode(value, { stream: true });
-
-                // 最初の文字が届いたら「慎也思考中...」の文字を消す
-                if (isFirstChunk) {
-                    aiDiv.innerText = "";
-                    isFirstChunk = false;
+                const lines = chunk.split("\n");
+                
+                for (const line of lines) {
+                    if (line.startsWith("data: ")) {
+                        try {
+                            const data = JSON.parse(line.replace("data: ", ""));
+                            
+                            if (isFirstChunk) {
+                                aiDiv.innerText = ""; // 最初の文字が来たら「思考中」をクリア
+                                isFirstChunk = false;
+                            }
+                            
+                            aiDiv.innerText += data.text; // 1文字ずつパラパラ表示！
+                            box.scrollTop = box.scrollHeight; 
+                        } catch (e) {
+                            // 不完全なJSONは無視
+                        }
+                    }
                 }
-
-                aiDiv.innerText += chunk; // 届いた文字を追加！
-                box.scrollTop = box.scrollHeight; // 常に一番下にスクロール
             }
 
         } catch (e) {
-            // エラー処理
-            appendMsg('bot', '通信エラーが発生しました。');
+            appendMsg('bot', 'システムエラー：通信が途絶えました。');
         }
     }
 
-    // ユーザー側のメッセージを表示するお馴染みの関数
     function appendMsg(sender, text) {
         const div = document.createElement('div');
         div.className = `msg ${sender}`;
@@ -110,7 +115,6 @@
         box.scrollTop = box.scrollHeight;
     }
 
-    // Enterキーで送信
     document.getElementById('user-input').addEventListener('keypress', function (e) {
         if (e.key === 'Enter') { send(); }
     });

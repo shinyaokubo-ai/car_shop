@@ -3,23 +3,24 @@ import json
 import uuid
 from django.utils import timezone
 from django.shortcuts import render
-from django.http import JsonResponse
+from django.http import JsonResponse, StreamingHttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.core.cache import cache
 from google.cloud import storage
 import google.generativeai as genai
-# 🌟一番上の import が並んでいる所に、この1行を追加してください
-from django.http import StreamingHttpResponse
 
+# モデルのインポート
 from .models import ChatLog
 
+# Gemini設定
 genai.configure(api_key=os.environ.get("GEMINI_API_KEY"))
 
 def chat_interface(request):
+    """チャット画面を表示する"""
     return render(request, 'my_brain/chat.html')
 
 def get_shinya_knowledge():
-    """GCSから知識を自動取得。無関係なファイルを読み込まないようフィルタリングも可能"""
+    """GCSから独自の知識を自動取得してキャッシュする"""
     knowledge = cache.get("shinya_multi_knowledge")
     if not knowledge:
         BUCKET_NAME = "car-shop-media-0709"
@@ -56,15 +57,16 @@ def get_shinya_knowledge():
             return None
     return knowledge
 
-# 🌟下の api_chat 関数を、これに丸ごと上書きします
 @csrf_exempt
 def api_chat(request):
+    """SSE（Server-Sent Events）対応の爆速AIチャットAPI"""
     if request.method == "POST":
         try:
             user_message = ""
             uploaded_file = None
             public_url = ""
 
+            # 1. データの仕分け
             if "application/json" in request.content_type:
                 data = json.loads(request.body.decode('utf-8'))
                 user_message = data.get("message", "")
@@ -76,23 +78,26 @@ def api_chat(request):
             if not user_message and not uploaded_file:
                 user_message = "（メッセージなし）"
 
+            # 2. 知識の取得
             knowledge = get_shinya_knowledge()
             if not knowledge:
-                # エラー時もパラパラ用の形式（単一の文字）で返す
-                return StreamingHttpResponse(iter(["記憶にアクセスできないな。設定を確認してくれ。"]), content_type='text/plain')
+                error_msg = json.dumps({"text": "記憶にアクセスできないな。設定を確認してくれ。"})
+                return StreamingHttpResponse((f"data: {error_msg}\n\n" for _ in range(1)), content_type='text/event-stream')
 
+            # 3. 画像をGCSにアップロード
             if uploaded_file:
                 client = storage.Client()
                 bucket = client.bucket("car-shop-media-0709")
                 ext = os.path.splitext(uploaded_file.name)[1]
-                import uuid
-                from django.utils import timezone
                 filename = f"chat_uploads/{timezone.now().strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4().hex[:6]}{ext}"
                 blob = bucket.blob(filename)
                 blob.upload_from_file(uploaded_file, content_type=uploaded_file.content_type)
                 public_url = f"https://storage.googleapis.com/car-shop-media-0709/{filename}"
-                uploaded_file.seek(0)
+                uploaded_file.seek(0) # Gemini読み取り用にリセット
 
+            # 4. AIへの人格・知識注入
+            # あなたはプロフェッショナルなITエンジニアであり、ポルシェ専門店や立実家TVのPRも手掛け、
+            # 南インド料理や落語にも精通する「大久保慎也」の分身です。
             system_instruction = f"""
             あなたは「慎也」の分身です。以下のこだわりを信念として持っています。
             【制約事項】
@@ -104,6 +109,7 @@ def api_chat(request):
             {knowledge["text"]}
             """
             
+            # 画像解析が可能な最新の Flash モデルを使用
             model = genai.GenerativeModel(
                 model_name="gemini-2.5-flash",
                 system_instruction=system_instruction
@@ -115,33 +121,34 @@ def api_chat(request):
                 prompt_parts.append({"mime_type": uploaded_file.content_type, "data": uploaded_file.read()})
             prompt_parts.extend(knowledge["media_parts"])
             
-            # 🌟変更：stream=True を追加して、パラパラ生成モードにする！
+            # 5. ストリーミング生成（SSE形式）
             response = model.generate_content(prompt_parts, stream=True)
             
-            # 🌟変更：文字ができたら順番に送信し、最後にDBに保存する特別な関数
             def stream_generator():
                 full_text = ""
                 try:
                     for chunk in response:
                         if chunk.text:
                             full_text += chunk.text
-                            yield chunk.text  # できた文字からフロントエンドに投げる！
+                            # 大久保式 SSE フォーマット
+                            payload = json.dumps({"text": chunk.text})
+                            yield f"data: {payload}\n\n"
                 except Exception as e:
-                    yield f"\n[AI生成エラー: {str(e)}]"
+                    error_msg = json.dumps({"text": f"\n\n[AI生成エラー: {str(e)}]"})
+                    yield f"data: {error_msg}\n\n"
                 finally:
-                    # 全部の送信が終わったら、こっそり裏でデータベースに保存する
-                    from .models import ChatLog
+                    # 全て終わったら、こっそりNeon DBに保存
                     ChatLog.objects.create(
                         user_message=user_message,
                         ai_response=full_text,
                         file_url=public_url
                     )
 
-            # JsonResponseではなく、StreamingHttpResponseを使う
-            return StreamingHttpResponse(stream_generator(), content_type='text/plain; charset=utf-8')
+            return StreamingHttpResponse(stream_generator(), content_type='text/event-stream')
             
         except Exception as e:
             print(f"【AIチャットエラー】{str(e)}")
-            return StreamingHttpResponse(iter([f"システムエラー: {str(e)}"]), content_type='text/plain')
+            error_msg = json.dumps({"text": f"システムエラー: {str(e)}"})
+            return StreamingHttpResponse((f"data: {error_msg}\n\n" for _ in range(1)), content_type='text/event-stream')
             
-    return StreamingHttpResponse(iter(["不正なリクエストです"]), content_type='text/plain')
+    return JsonResponse({"error": "不正なリクエストです"}, status=405)
