@@ -75,14 +75,25 @@ def get_shinya_knowledge():
 def api_chat(request):
     if request.method == "POST":
         try:
-            data = json.loads(request.body)
-            user_message = data.get("message")
-            
+            # 🌟修正：どんな形式で送られてきても絶対に受け取る「最強の入り口」
+            user_message = ""
+            try:
+                if request.body:
+                    data = json.loads(request.body)
+                    user_message = data.get("message", "")
+            except json.JSONDecodeError:
+                # JSON形式じゃなかった場合（画像添付など）はこっちで受け取る
+                user_message = request.POST.get("message", "")
+
+            # 空っぽの場合はダミー文字を入れる（DBエラー防止）
+            if not user_message:
+                user_message = "（メッセージなし）"
+
             knowledge = get_shinya_knowledge()
             if not knowledge:
                 return JsonResponse({"reply": "記憶にアクセスできないな。設定を確認してくれ。"})
 
-            # ★ 喋りすぎ防止の制約を追加
+            # ★ 喋りすぎ防止の制約
             system_instruction = f"""
             あなたは「慎也」の分身です。以下のこだわりを信念として持っています。
             
@@ -104,7 +115,8 @@ def api_chat(request):
             prompt_parts = [user_message] + knowledge["media_parts"]
             response = model.generate_content(prompt_parts)
             
-            # 🌟🌟 核心部：データベース（ChatLog）に会話を保存する！ 🌟🌟
+            # 🌟🌟 データベース（ChatLog）に会話を保存する！ 🌟🌟
+            from .models import ChatLog
             ChatLog.objects.create(
                 user_message=user_message,
                 ai_response=response.text
@@ -113,6 +125,8 @@ def api_chat(request):
             return JsonResponse({"reply": response.text})
             
         except Exception as e:
-            return JsonResponse({"error": str(e)}, status=500)
+            # 万が一エラーが起きても原因がわかるように出力
+            print(f"【AIチャットエラー】{str(e)}")
+            return JsonResponse({"error": f"システムエラー: {str(e)}"}, status=500)
             
-    return JsonResponse({"error": "Method not allowed"}, status=405)
+    return JsonResponse({"error": "不正なリクエストです"}, status=405)
