@@ -75,25 +75,28 @@ def get_shinya_knowledge():
 def api_chat(request):
     if request.method == "POST":
         try:
-            # 🌟修正：どんな形式で送られてきても絶対に受け取る「最強の入り口」
             user_message = ""
-            try:
-                if request.body:
-                    data = json.loads(request.body)
-                    user_message = data.get("message", "")
-            except json.JSONDecodeError:
-                # JSON形式じゃなかった場合（画像添付など）はこっちで受け取る
-                user_message = request.POST.get("message", "")
+            uploaded_file = None
 
-            # 空っぽの場合はダミー文字を入れる（DBエラー防止）
-            if not user_message:
+            # 🌟修正1：荷物の種類（文字か画像か）を事前にチェックして仕分ける
+            if "application/json" in request.content_type:
+                # 文字だけの場合
+                data = json.loads(request.body.decode('utf-8'))
+                user_message = data.get("message", "")
+            else:
+                # 画像などのファイルが添付されている場合
+                user_message = request.POST.get("message", "")
+                if request.FILES:
+                    # 添付ファイルをキャッチ
+                    uploaded_file = list(request.FILES.values())[0]
+
+            if not user_message and not uploaded_file:
                 user_message = "（メッセージなし）"
 
             knowledge = get_shinya_knowledge()
             if not knowledge:
                 return JsonResponse({"reply": "記憶にアクセスできないな。設定を確認してくれ。"})
 
-            # ★ 喋りすぎ防止の制約
             system_instruction = f"""
             あなたは「慎也」の分身です。以下のこだわりを信念として持っています。
             
@@ -108,24 +111,41 @@ def api_chat(request):
             """
             
             model = genai.GenerativeModel(
-                model_name="gemini-2.5-flash", # 最新安定版を使用
+                model_name="gemini-2.5-flash",
                 system_instruction=system_instruction
             )
             
-            prompt_parts = [user_message] + knowledge["media_parts"]
+            # 🌟修正2：Geminiに送るプロンプトを組み立てる（文字＋アップロード画像＋知識）
+            prompt_parts = []
+            if user_message:
+                prompt_parts.append(user_message)
+            
+            # 画像があれば、Geminiの目に直接見せる
+            if uploaded_file:
+                prompt_parts.append({
+                    "mime_type": uploaded_file.content_type,
+                    "data": uploaded_file.read()
+                })
+                
+            prompt_parts.extend(knowledge["media_parts"])
+            
             response = model.generate_content(prompt_parts)
             
             # 🌟🌟 データベース（ChatLog）に会話を保存する！ 🌟🌟
             from .models import ChatLog
+            
+            # DBのfile_url欄には、とりあえず「ファイル名」を記録しておく
+            file_info = f"添付画像あり: {uploaded_file.name}" if uploaded_file else ""
+            
             ChatLog.objects.create(
                 user_message=user_message,
-                ai_response=response.text
+                ai_response=response.text,
+                file_url=file_info  # 管理画面で「画像が送られたこと」がわかるようにする
             )
             
             return JsonResponse({"reply": response.text})
             
         except Exception as e:
-            # 万が一エラーが起きても原因がわかるように出力
             print(f"【AIチャットエラー】{str(e)}")
             return JsonResponse({"error": f"システムエラー: {str(e)}"}, status=500)
             
