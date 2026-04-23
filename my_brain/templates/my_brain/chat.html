@@ -43,25 +43,64 @@
 
         if (!text && !file) return;
 
+        // ユーザーの送信メッセージを画面に表示
         appendMsg('user', text + (file ? `\n(ファイルを送信中: ${file.name})` : ''));
         input.value = '';
         fileInput.value = ''; // 送信後にクリア
 
-        // 画像を送るために FormData を使用する
+        // データをまとめる
         const formData = new FormData();
         formData.append('message', text);
         if (file) {
             formData.append('file', file);
         }
 
-        const res = await fetch('/my_brain/api/chat/', {
-            method: 'POST',
-            body: formData // JSONではなくFormDataで送る
-        });
-        const data = await res.json();
-        appendMsg('bot', data.reply || data.error);
+        try {
+            // 🌟バックエンドへ送信（JSONを待つのではなく、そのままfetchする）
+            const response = await fetch('/my_brain/api/chat/', {
+                method: 'POST',
+                body: formData
+            });
+
+            // 🌟パラパラ処理スタート
+            // 1. AIの空の吹き出しを先に作る
+            const aiDiv = document.createElement('div');
+            aiDiv.className = 'msg bot'; // 大久保さんのCSSクラス名「bot」を指定
+            aiDiv.innerText = "慎也思考中..."; 
+            document.getElementById('messages').appendChild(aiDiv);
+            
+            const box = document.getElementById('messages');
+            box.scrollTop = box.scrollHeight;
+
+            // 2. 届いたデータをパラパラ読み込む準備
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder("utf-8");
+            let isFirstChunk = true;
+
+            // 3. ループして1文字ずつ画面に追加していく！
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break; // 全部終わったらストップ
+
+                const chunk = decoder.decode(value, { stream: true });
+
+                // 最初の文字が届いたら「慎也思考中...」の文字を消す
+                if (isFirstChunk) {
+                    aiDiv.innerText = "";
+                    isFirstChunk = false;
+                }
+
+                aiDiv.innerText += chunk; // 届いた文字を追加！
+                box.scrollTop = box.scrollHeight; // 常に一番下にスクロール
+            }
+
+        } catch (e) {
+            // エラー処理
+            appendMsg('bot', '通信エラーが発生しました。');
+        }
     }
 
+    // ユーザー側のメッセージを表示するお馴染みの関数
     function appendMsg(sender, text) {
         const div = document.createElement('div');
         div.className = `msg ${sender}`;
@@ -71,6 +110,7 @@
         box.scrollTop = box.scrollHeight;
     }
 
+    // Enterキーで送信
     document.getElementById('user-input').addEventListener('keypress', function (e) {
         if (e.key === 'Enter') { send(); }
     });
