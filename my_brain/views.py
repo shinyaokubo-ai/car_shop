@@ -108,7 +108,7 @@ def api_chat(request):
             """
             
             model = genai.GenerativeModel(
-                model_name="gemini-1.5-flash", # 最新安定版を使用
+                model_name="gemini-2.5-flash", # 最新安定版を使用
                 system_instruction=system_instruction
             )
             
