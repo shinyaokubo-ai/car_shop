@@ -8,8 +8,8 @@ from django.http import JsonResponse, StreamingHttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from google.cloud import storage
 import google.generativeai as genai
-from pgvector.django import CosineDistance  # 🌟 ベクトル検索の切り札
-from dotenv import load_dotenv  # 🌟 ローカル環境の鍵を開ける部品
+from pgvector.django import CosineDistance
+from dotenv import load_dotenv
 
 # モデルのインポート
 from .models import ChatLog, KnowledgeChunk
@@ -32,7 +32,6 @@ def api_chat(request):
             uploaded_file = None
             public_url = ""
 
-            # 1. データの受け取り
             if "application/json" in request.content_type:
                 data = json.loads(request.body.decode('utf-8'))
                 user_message = data.get("message", "")
@@ -44,7 +43,6 @@ def api_chat(request):
             if not user_message and not uploaded_file:
                 user_message = "（メッセージなし）"
 
-            # 2. 画像があればGCSに保存
             if uploaded_file:
                 client = storage.Client()
                 bucket = client.bucket("car-shop-media-0709")
@@ -56,11 +54,10 @@ def api_chat(request):
                 uploaded_file.seek(0)
 
             # ----------------------------------------------------
-            # 🌟 3. ベクトル検索（RAG）の核心部
+            # 🌟 3. ベクトル検索（RAG）
             # ----------------------------------------------------
             rag_context = ""
             if user_message:
-                # A. ユーザーの質問を座標（ベクトル）に変換
                 embed_url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-embedding-001:embedContent?key={api_key}"
                 embed_payload = {
                     "model": "models/gemini-embedding-001",
@@ -69,14 +66,12 @@ def api_chat(request):
                     "outputDimensionality": 768
                 }
                 
-                # 安全装置：通信エラーをキャッチする
                 embed_res = requests.post(embed_url, json=embed_payload)
                 if embed_res.status_code != 200:
                     raise Exception(f"Google Embedding API Error: {embed_res.text}")
                 
                 query_vector = embed_res.json()['embedding']['values']
 
-                # B. Neonから「意味が近い順」に3つだけ記憶を引き抜く
                 similar_chunks = KnowledgeChunk.objects.annotate(
                     distance=CosineDistance('embedding', query_vector)
                 ).order_by('distance')[:3]
@@ -84,7 +79,7 @@ def api_chat(request):
                 rag_context = "\n---\n".join([c.text_content for c in similar_chunks])
 
             # ----------------------------------------------------
-            # 🌟 4. 人格と「引き抜いた記憶」をセットにする
+            # 🌟 4. 人格設定
             # ----------------------------------------------------
             system_instruction = f"""
             あなたは「慎也」の分身です。論理的かつ情熱的、そして職人的なトーンで回答してください。
@@ -101,7 +96,7 @@ def api_chat(request):
             """
             
             model = genai.GenerativeModel(
-                model_name="gemini-2.5-flash",  # 🌟 大久保さん本来の最新モデルに復活！",
+                model_name="gemini-2.5-flash",
                 system_instruction=system_instruction
             )
             
@@ -110,21 +105,27 @@ def api_chat(request):
             if uploaded_file:
                 prompt_parts.append({"mime_type": uploaded_file.content_type, "data": uploaded_file.read()})
             
-            # 5. ストリーミング生成（SSE）
+            # ----------------------------------------------------
+            # 🌟 5. ストリーミング生成（空っぽの連絡をスルーする処理を追加！）
+            # ----------------------------------------------------
             response = model.generate_content(prompt_parts, stream=True)
             
             def stream_generator():
                 full_text = ""
                 try:
                     for chunk in response:
-                        if chunk.text:
-                            full_text += chunk.text
-                            # 慎也式 SSE フォーマット
-                            yield f"data: {json.dumps({'text': chunk.text})}\n\n"
+                        try:
+                            # テキストを取り出してみて、エラーが出たら無視する
+                            text_data = chunk.text
+                            if text_data:
+                                full_text += text_data
+                                yield f"data: {json.dumps({'text': text_data})}\n\n"
+                        except Exception:
+                            # 最後の「終了コード」などでテキストが無い場合はここを通過して無視する
+                            continue
                 except Exception as e:
                     yield f"data: {json.dumps({'text': f'[AI生成エラー: {str(e)}]'})}\n\n"
                 finally:
-                    # 会話が終わったら履歴をNeonに保存
                     ChatLog.objects.create(
                         user_message=user_message,
                         ai_response=full_text,
@@ -134,8 +135,7 @@ def api_chat(request):
             return StreamingHttpResponse(stream_generator(), content_type='text/event-stream')
             
         except Exception as e:
-            # 画面側に分かりやすいエラーを表示
-            error_msg = json.dumps({"text": f"システムエラーが発生しました。設定を確認してください。\n({str(e)})"})
+            error_msg = json.dumps({"text": f"システムエラーが発生しました。\n({str(e)})"})
             return StreamingHttpResponse((f"data: {error_msg}\n\n" for _ in range(1)), content_type='text/event-stream')
             
     return JsonResponse({"error": "不正なリクエストです"}, status=405)
