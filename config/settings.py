@@ -127,3 +127,11 @@ CACHES = {
         'LOCATION': 'shinya-brain-cache',
     }
 }
+
+# 🌟 緊急レスキュー：本番環境の画像をGCS（バケット）に強制固定！
+DEFAULT_FILE_STORAGE = 'storages.backends.gcloud.GoogleCloudStorage'
+GS_BUCKET_NAME = 'car-shop-media-0709'
+MEDIA_URL = f"https://storage.googleapis.com/{GS_BUCKET_NAME}/"
+STORAGES["default"] = {
+    "BACKEND": "storages.backends.gcloud.GoogleCloudStorage",
+}
