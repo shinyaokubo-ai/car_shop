@@ -132,6 +132,7 @@ CACHES = {
 DEFAULT_FILE_STORAGE = 'storages.backends.gcloud.GoogleCloudStorage'
 GS_BUCKET_NAME = 'car-shop-media-0709'
 MEDIA_URL = f"https://storage.googleapis.com/{GS_BUCKET_NAME}/"
+GS_QUERYSTRING_AUTH = False  # 👈 🌟これです！！「余計な鍵（署名）を作らなくていいよ」という命令
 STORAGES["default"] = {
     "BACKEND": "storages.backends.gcloud.GoogleCloudStorage",
 }
