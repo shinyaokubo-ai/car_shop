@@ -1,0 +1,16 @@
+{
+  "name": "慎也の分身AI",
+  "short_name": "慎也AI",
+  "description": "大久保慎也の思考を再現するRAGアシスタント",
+  "start_url": "/my_brain/",
+  "display": "standalone",
+  "background_color": "#f0f2f5",
+  "theme_color": "#0084ff",
+  "icons": [
+    {
+      "src": "https://storage.googleapis.com/car-shop-media-0709/chat_uploads/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    }
+  ]
+}
