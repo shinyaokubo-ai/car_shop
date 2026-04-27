@@ -1,6 +1,12 @@
-<!DOCTYPE html>
+{% load static %} <!DOCTYPE html>
 <html lang="ja">
 <head>
+    <link rel="manifest" href="{% static 'my_brain/manifest.json' %}">
+    <script>
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('{% static "my_brain/service-worker.js" %}');
+      }
+    </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>慎也の分身ボット（爆速ストリーミング版）</title>
@@ -36,11 +42,7 @@
 
 
     <link rel="manifest" href="/static/my_brain/manifest.json">
-    <script>
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('/static/my_brain/service-worker.js');
-  }
-    </script>
+   
 </head>
 <body>
 
