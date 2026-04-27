@@ -24,3 +24,4 @@ google-genai
 python-dotenv
 google-generativeai
 google-cloud-storage
+pgvector==0.4.2

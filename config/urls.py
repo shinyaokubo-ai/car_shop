@@ -20,11 +20,13 @@ from django.conf import settings
 from django.conf.urls.static import static
 
 
+
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('ai-assist/', include('ai_assist.urls')), # 🌟 AIアシストへの秘密の道！
     path('', include('cars.urls')),                # 既存のWix用システムへの道
     path('my_brain/', include('my_brain.urls')),
+   
     
 ]
 

@@ -1,9 +1,13 @@
 import os
 from pathlib import Path
 import dj_database_url
+from dotenv import load_dotenv  # 🌟 追加：.envファイルを読み込む部品
 
 # ベースディレクトリ
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+# 🌟 追加：一番最初に .env ファイルを読み込む（ここでNeonのURLを確実にゲット！）
+load_dotenv(os.path.join(BASE_DIR, '.env'))
 
 SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-default-key')
 
@@ -20,10 +24,10 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.humanize',
     'django.contrib.staticfiles',
-    'storages',      # 🌟 追加：Google Cloud Storageを使うための必須ライブラリ
+    'storages',      # Google Cloud Storageを使うための必須ライブラリ
     'cars',
     'ai_assist',
-    'my_brain', # 今回作るアプリを追加
+    'my_brain',      # 今回作るアプリ
 ]
 
 MIDDLEWARE = [
@@ -58,6 +62,7 @@ TEMPLATES = [
 WSGI_APPLICATION = 'config.wsgi.application'
 
 # --- データベース設定 ---
+# 🌟 load_dotenv のおかげで、確実にNeon（DATABASE_URL）へ繋がります！
 DATABASES = {
     'default': dj_database_url.config(
         default=os.environ.get('DATABASE_URL', f"sqlite:///{BASE_DIR / 'db.sqlite3'}")
@@ -84,10 +89,7 @@ IS_PRODUCTION = os.environ.get('GOOGLE_CLOUD_PROJECT') is not None
 if IS_PRODUCTION or os.path.exists(GCP_KEY_PATH):
     # --- 本番環境 または ローカル（鍵あり）の場合：Google Cloud Storageを使用 ---
     DEFAULT_FILE_STORAGE = 'storages.backends.gcloud.GoogleCloudStorage'
-    
     GS_BUCKET_NAME = 'car-shop-media-0709'  
-    
-    # 🌟 修正ポイント：GCPのバケットから直接画像を読み込むための設定を追加
     MEDIA_URL = f"https://storage.googleapis.com/{GS_BUCKET_NAME}/"
     
     STORAGES = {
@@ -117,9 +119,6 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 CSRF_TRUSTED_ORIGINS = [
     'https://car-shop-app-572463964631.asia-northeast1.run.app',
 ]
-
-# settings.py の一番最後にこれを追記して上書き保存！
-MEDIA_URL = 'https://storage.googleapis.com/car-shop-media-0709/'
 
 # キャッシュの設定（ローカルメモリを使用）
 CACHES = {
