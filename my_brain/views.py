@@ -11,6 +11,8 @@ import google.generativeai as genai
 from pgvector.django import CosineDistance
 from dotenv import load_dotenv
 from django.db.models import Q
+# ▼ これを追加！ ▼
+from .models import ChatLog, KnowledgeChunk
 
 # 🌟 既存のcarsプロジェクトからモデルをインポート
 from cars.models import Car
