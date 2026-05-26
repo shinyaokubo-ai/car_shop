@@ -11,7 +11,8 @@ import google.generativeai as genai
 from pgvector.django import CosineDistance
 from dotenv import load_dotenv
 from django.db.models import Q
-# ▼ これを追加！ ▼
+
+# ▼ データベース連携用のモデルをインポート ▼
 from .models import ChatLog, KnowledgeChunk
 
 # 🌟 既存のcarsプロジェクトからモデルをインポート
@@ -49,9 +50,8 @@ def search_inventory(model_query: str = None, max_price: int = None):
     results = []
     # 最新の5件まで取得
     for car in qs.order_by('-created_at')[:5]:
-       
+        
         # urls.py が <int:pk>/ なので、car.pk (ID番号) を使うのが正解！
-       # urls.py が <int:pk>/ なので、car.pk (ID番号) を使うのが正解！
         detail_url = f"https://car-shop-app-572463964631.asia-northeast1.run.app/cars/{car.pk}/"
         
         results.append({
@@ -97,11 +97,16 @@ def api_chat(request):
                 public_url = f"https://storage.googleapis.com/car-shop-media-0709/{filename}"
                 uploaded_file.seek(0)
 
-            # 🌟 RAG（ベクトル検索）
+            # 🌟 RAG（ベクトル検索）: データベースの3072次元規格に完全適合化
             rag_context = ""
             if user_message:
-                embed_url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-embedding-001:embedContent?key={api_key}"
-                embed_payload = {"model": "models/gemini-embedding-001", "content": {"parts": [{"text": user_message}]}, "taskType": "RETRIEVAL_QUERY"}
+                embed_url = f"https://generativelanguage.googleapis.com/v1beta/models/text-embedding-004:embedContent?key={api_key}"
+                embed_payload = {
+                    "model": "models/text-embedding-004", 
+                    "content": {"parts": [{"text": user_message}]}, 
+                    "taskType": "RETRIEVAL_QUERY",
+                    "outputDimensionality": 3072  # 🌟 ここで確実に3072次元のベクトルを受け取る設定を追加
+                }
                 embed_res = requests.post(embed_url, json=embed_payload)
                 if embed_res.status_code == 200:
                     query_vector = embed_res.json()['embedding']['values']
@@ -126,7 +131,7 @@ def api_chat(request):
             tools = [search_inventory]
 
             model = genai.GenerativeModel(
-                model_name="gemini-1.5-flash", # または gemini-2.0-flash-exp など
+                model_name="gemini-1.5-flash", 
                 system_instruction=system_instruction,
                 tools=tools
             )
