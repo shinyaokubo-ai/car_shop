@@ -49,7 +49,10 @@ def search_inventory(model_query: str = None, max_price: int = None):
     for car in qs.order_by('-created_at')[:5]:
        
         # urls.py が <int:pk>/ なので、car.pk (ID番号) を使うのが正解！
-　　　　　detail_url = f"https://car-shop-app-572463964631.asia-northeast1.run.app/cars/{car.pk}/"
+       # urls.py が <int:pk>/ なので、car.pk (ID番号) を使うのが正解！
+        detail_url = f"https://car-shop-app-572463964631.asia-northeast1.run.app/cars/{car.pk}/"
+        
+        results.append({
             "車名": car.title,
             "総額": f"{car.price_total:,}円",
             "年式": car.registration_year,
@@ -58,7 +61,6 @@ def search_inventory(model_query: str = None, max_price: int = None):
             "URL": detail_url,
             "特徴": car.comment[:50] + "..."
         })
-    
     if not results:
         return "現在、ご希望の条件に合う車両は在庫にございません。"
     
