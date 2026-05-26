@@ -26,6 +26,7 @@ urlpatterns = [
     path('ai-assist/', include('ai_assist.urls')), # 🌟 AIアシストへの秘密の道！
     path('', include('cars.urls')),                # 既存のWix用システムへの道
     path('my_brain/', include('my_brain.urls')),
+    path('api/lp/', include('car_lp_builder.urls')), # 🌟 これを追加！
    
     
 ]
@@ -33,3 +34,4 @@ urlpatterns = [
 # ★画像を表示するための魔法のコード（開発環境用）
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+

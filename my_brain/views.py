@@ -10,22 +10,65 @@ from google.cloud import storage
 import google.generativeai as genai
 from pgvector.django import CosineDistance
 from dotenv import load_dotenv
+from django.db.models import Q
 
-# モデルのインポート
-from .models import ChatLog, KnowledgeChunk
+# 🌟 既存のcarsプロジェクトからモデルをインポート
+from cars.models import Car
 
-# 初期設定：.envから設定を読み込む
+# 初期設定
 load_dotenv()
 api_key = os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY")
 genai.configure(api_key=api_key)
 
+# ----------------------------------------------------
+# 🌟 1. AIが使う「道具（在庫検索関数）」を定義
+# ----------------------------------------------------
+def search_inventory(model_query: str = None, max_price: int = None):
+    """
+    ワイズプロジェクト市原の最新在庫車両をデータベースから直接検索します。
+    
+    Args:
+        model_query: 車種名やキーワード（例：「マカン」「911」「4WD」など）
+        max_price: 支払総額の最大予算（単位：円）
+    """
+    # 公開中かつ在庫ありの車両に絞り込む
+    qs = Car.objects.filter(is_published=True, is_sold_out=False)
+    
+    if model_query:
+        qs = qs.filter(
+            Q(title__icontains=model_query) | 
+            Q(comment__icontains=model_query) |
+            Q(equipment_custom__icontains=model_query)
+        )
+    
+    if max_price:
+        qs = qs.filter(price_total__lte=max_price)
+    
+    results = []
+    # 最新の5件まで取得
+    for car in qs.order_by('-created_at')[:5]:
+       
+        # urls.py が <int:pk>/ なので、car.pk (ID番号) を使うのが正解！
+　　　　　detail_url = f"https://car-shop-app-572463964631.asia-northeast1.run.app/cars/{car.pk}/"
+            "車名": car.title,
+            "総額": f"{car.price_total:,}円",
+            "年式": car.registration_year,
+            "走行距離": car.mileage,
+            "色": car.body_color,
+            "URL": detail_url,
+            "特徴": car.comment[:50] + "..."
+        })
+    
+    if not results:
+        return "現在、ご希望の条件に合う車両は在庫にございません。"
+    
+    return results
+
 def chat_interface(request):
-    """チャット画面を表示する"""
     return render(request, 'my_brain/chat.html')
 
 @csrf_exempt
 def api_chat(request):
-    """SSE対応：ベクトル検索（RAG）を搭載した爆速AIチャットAPI"""
     if request.method == "POST":
         try:
             user_message = ""
@@ -40,9 +83,6 @@ def api_chat(request):
                 if request.FILES:
                     uploaded_file = list(request.FILES.values())[0]
 
-            if not user_message and not uploaded_file:
-                user_message = "（メッセージなし）"
-
             if uploaded_file:
                 client = storage.Client()
                 bucket = client.bucket("car-shop-media-0709")
@@ -53,89 +93,67 @@ def api_chat(request):
                 public_url = f"https://storage.googleapis.com/car-shop-media-0709/{filename}"
                 uploaded_file.seek(0)
 
-            # ----------------------------------------------------
-            # 🌟 3. ベクトル検索（RAG）
-            # ----------------------------------------------------
+            # 🌟 RAG（ベクトル検索）
             rag_context = ""
             if user_message:
                 embed_url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-embedding-001:embedContent?key={api_key}"
-                embed_payload = {
-                    "model": "models/gemini-embedding-001",
-                    "content": {"parts": [{"text": user_message}]},
-                    "taskType": "RETRIEVAL_QUERY",
-                    "outputDimensionality": 768
-                }
-                
+                embed_payload = {"model": "models/gemini-embedding-001", "content": {"parts": [{"text": user_message}]}, "taskType": "RETRIEVAL_QUERY"}
                 embed_res = requests.post(embed_url, json=embed_payload)
-                if embed_res.status_code != 200:
-                    raise Exception(f"Google Embedding API Error: {embed_res.text}")
-                
-                query_vector = embed_res.json()['embedding']['values']
-
-                similar_chunks = KnowledgeChunk.objects.annotate(
-                    distance=CosineDistance('embedding', query_vector)
-                ).order_by('distance')[:3]
-                
-                rag_context = "\n---\n".join([c.text_content for c in similar_chunks])
+                if embed_res.status_code == 200:
+                    query_vector = embed_res.json()['embedding']['values']
+                    similar_chunks = KnowledgeChunk.objects.annotate(distance=CosineDistance('embedding', query_vector)).order_by('distance')[:3]
+                    rag_context = "\n---\n".join([c.text_content for c in similar_chunks])
 
             # ----------------------------------------------------
-            # 🌟 4. 人格設定
+            # 🌟 2. 人格設定 & Function Callingの準備
             # ----------------------------------------------------
             system_instruction = f"""
-            あなたは「慎也」の分身です。論理的かつ情熱的、そして職人的なトーンで回答してください。
-            あなたはワイズプロジェクト市原でポルシェのテクニカル・PRサポートを担うプロであり、
-            同時に南インド料理の真髄を極める料理人でもあります。
+            あなたは「慎也」の分身です。論理的かつ情熱的、職人的トーンで回答してください。
+            ワイズプロジェクト市原のプロであり、南インド料理の達人でもあります。
 
-            【制約事項】
-            1. 以下の【参考資料】に答えがある場合は、それを最優先で回答に反映させてください。
-            2. 【参考資料】にない場合でも、自分の知識で自信を持って答えてください。
-            3. 常に「引き算」を意識し、無駄な解説は省いて核心を突く短めの回答を心がけてください。
+            【重要】在庫状況を聞かれたら、必ず提供されたツール（search_inventory）を使って最新のDB情報を確認し、その結果を元に案内してください。
+            回答の最後には、必ず詳細ページのURLを添えて、お客様を誘導してください。
 
-            【参考資料】
+            【参考資料（RAG）】
             {rag_context}
             """
             
+            # 道具箱を登録
+            tools = [search_inventory]
+
             model = genai.GenerativeModel(
-                model_name="gemini-2.5-flash",
-                system_instruction=system_instruction
+                model_name="gemini-1.5-flash", # または gemini-2.0-flash-exp など
+                system_instruction=system_instruction,
+                tools=tools
             )
+            
+            # Function Callingを自動処理するチャットセッションを開始
+            chat_session = model.start_chat(enable_automatic_function_calling=True)
             
             prompt_parts = []
             if user_message: prompt_parts.append(user_message)
             if uploaded_file:
                 prompt_parts.append({"mime_type": uploaded_file.content_type, "data": uploaded_file.read()})
             
-            # ----------------------------------------------------
-            # 🌟 5. ストリーミング生成（空っぽの連絡をスルーする処理を追加！）
-            # ----------------------------------------------------
-            response = model.generate_content(prompt_parts, stream=True)
+            # 🌟 ストリーミング生成
+            response = chat_session.send_message(prompt_parts, stream=True)
             
             def stream_generator():
                 full_text = ""
                 try:
                     for chunk in response:
-                        try:
-                            # テキストを取り出してみて、エラーが出たら無視する
-                            text_data = chunk.text
-                            if text_data:
-                                full_text += text_data
-                                yield f"data: {json.dumps({'text': text_data})}\n\n"
-                        except Exception:
-                            # 最後の「終了コード」などでテキストが無い場合はここを通過して無視する
-                            continue
+                        text_data = chunk.text
+                        if text_data:
+                            full_text += text_data
+                            yield f"data: {json.dumps({'text': text_data})}\n\n"
                 except Exception as e:
                     yield f"data: {json.dumps({'text': f'[AI生成エラー: {str(e)}]'})}\n\n"
                 finally:
-                    ChatLog.objects.create(
-                        user_message=user_message,
-                        ai_response=full_text,
-                        file_url=public_url
-                    )
+                    ChatLog.objects.create(user_message=user_message, ai_response=full_text, file_url=public_url)
 
             return StreamingHttpResponse(stream_generator(), content_type='text/event-stream')
             
         except Exception as e:
-            error_msg = json.dumps({"text": f"システムエラーが発生しました。\n({str(e)})"})
-            return StreamingHttpResponse((f"data: {error_msg}\n\n" for _ in range(1)), content_type='text/event-stream')
+            return JsonResponse({"error": str(e)}, status=500)
             
-    return JsonResponse({"error": "不正なリクエストです"}, status=405)
+    return JsonResponse({"error": "不正なリクエスト"}, status=405)

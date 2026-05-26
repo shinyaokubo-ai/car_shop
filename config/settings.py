@@ -28,9 +28,12 @@ INSTALLED_APPS = [
     'cars',
     'ai_assist',
     'my_brain',      # 今回作るアプリ
+    'car_lp_builder', # これを追加！
+    'corsheaders', # 🌟 これを追加
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware', # 🌟 必ず一番上に書く！
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware', # 静的ファイル用
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -118,6 +121,10 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # --- セキュリティ設定（Cloud RunのURLを許可する） ---
 CSRF_TRUSTED_ORIGINS = [
     'https://car-shop-app-572463964631.asia-northeast1.run.app',
+    'https://*.github.dev',
+    'https://*.app.github.dev',
+    'https://localhost:8000', # 🌟 これを追加！
+    'http://localhost:8000',  # 念のためhttpも追加
 ]
 
 # キャッシュの設定（ローカルメモリを使用）
@@ -136,3 +143,6 @@ GS_QUERYSTRING_AUTH = False  # 👈 🌟これです！！「余計な鍵（署�
 STORAGES["default"] = {
     "BACKEND": "storages.backends.gcloud.GoogleCloudStorage",
 }
+
+
+CORS_ALLOW_ALL_ORIGINS = True  # 開発中なので一旦すべて許可！
