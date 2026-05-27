@@ -25,4 +25,4 @@ COPY . /app/
 EXPOSE 8080
 
 # 8. Gunicornを使ってDjangoを起動
-CMD ["gunicorn", "--bind", ":8080", "--workers", "2", "car_shop.wsgi:application"]
+CMD ["gunicorn", "--bind", ":8080", "--workers", "2", "config.wsgi:application"]
