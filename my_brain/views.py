@@ -144,21 +144,21 @@ def api_chat(request):
             if uploaded_file:
                 prompt_parts.append({"mime_type": uploaded_file.content_type, "data": uploaded_file.read()})
             
-            # 🌟 ストリーミング生成
-            response = chat_session.send_message(prompt_parts, stream=True)
+           # 🌟 エラー回避のため stream=False に変更（在庫検索ツールを優先）
+            response = chat_session.send_message(prompt_parts, stream=False)
             
             def stream_generator():
-                full_text = ""
                 try:
-                    for chunk in response:
-                        text_data = chunk.text
-                        if text_data:
-                            full_text += text_data
-                            yield f"data: {json.dumps({'text': text_data})}\n\n"
+                    # 分割せず、一気に回答を取得する
+                    full_text = response.text
+                    
+                    # 画面側の仕組み（SSE）を壊さないよう、同じ形式で一気に送信
+                    yield f"data: {json.dumps({'text': full_text})}\n\n"
+                    
+                    # ログの保存
+                    ChatLog.objects.create(user_message=user_message, ai_response=full_text, file_url=public_url)
                 except Exception as e:
                     yield f"data: {json.dumps({'text': f'[AI生成エラー: {str(e)}]'})}\n\n"
-                finally:
-                    ChatLog.objects.create(user_message=user_message, ai_response=full_text, file_url=public_url)
 
             return StreamingHttpResponse(stream_generator(), content_type='text/event-stream')
             
