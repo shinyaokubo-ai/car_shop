@@ -23,6 +23,7 @@ load_dotenv()
 api_key = os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY")
 genai.configure(api_key=api_key)
 
+
 # ----------------------------------------------------
 # 🌟 1. AIが使う「道具（在庫検索関数）」を定義
 # ----------------------------------------------------
@@ -45,29 +46,38 @@ def search_inventory(model_query: str = None, max_price: int = None):
         )
     
     if max_price:
-        qs = qs.filter(price_total__lte=max_price)
+        # 文字列で渡された場合の対策としてintに変換
+        qs = qs.filter(price_total__lte=int(max_price))
     
     results = []
     # 最新の5件まで取得
     for car in qs.order_by('-created_at')[:5]:
         
-        # urls.py が <int:pk>/ なので、car.pk (ID番号) を使うのが正解！
         detail_url = f"https://car-shop-app-572463964631.asia-northeast1.run.app/cars/{car.pk}/"
         
+        # 🌟 データが空（None）だった場合のクラッシュ防止処理
+        price_str = f"{car.price_total:,}円" if car.price_total else "価格応談"
+        comment_str = (car.comment[:50] + "...") if car.comment else "詳細はリンクからご確認ください"
+        
         results.append({
-            "車名": car.title,
-            "総額": f"{car.price_total:,}円",
-            "年式": car.registration_year,
-            "走行距離": car.mileage,
-            "色": car.body_color,
+            "車名": car.title or "車名不明",
+            "総額": price_str,
+            "年式": car.registration_year or "-",
+            "走行距離": car.mileage or "-",
+            "色": car.body_color or "-",
             "URL": detail_url,
-            "特徴": car.comment[:50] + "..."
+            "特徴": comment_str
         })
+        
     if not results:
         return "現在、ご希望の条件に合う車両は在庫にございません。"
     
     return results
 
+
+# ----------------------------------------------------
+# 🌟 2. チャット画面とAPIの処理
+# ----------------------------------------------------
 def chat_interface(request):
     return render(request, 'my_brain/chat.html')
 
@@ -87,6 +97,7 @@ def api_chat(request):
                 if request.FILES:
                     uploaded_file = list(request.FILES.values())[0]
 
+            # GCSへのファイルアップロード処理
             if uploaded_file:
                 client = storage.Client()
                 bucket = client.bucket("car-shop-media-0709")
@@ -97,7 +108,7 @@ def api_chat(request):
                 public_url = f"https://storage.googleapis.com/car-shop-media-0709/{filename}"
                 uploaded_file.seek(0)
 
-            # 🌟 RAG（ベクトル検索）: データベースの3072次元規格に完全適合化
+            # 🌟 RAG（ベクトル検索）: 3072次元規格
             rag_context = ""
             if user_message:
                 embed_url = f"https://generativelanguage.googleapis.com/v1beta/models/text-embedding-004:embedContent?key={api_key}"
@@ -105,7 +116,7 @@ def api_chat(request):
                     "model": "models/text-embedding-004", 
                     "content": {"parts": [{"text": user_message}]}, 
                     "taskType": "RETRIEVAL_QUERY",
-                    "outputDimensionality": 3072  # 🌟 ここで確実に3072次元のベクトルを受け取る設定を追加
+                    "outputDimensionality": 3072 
                 }
                 embed_res = requests.post(embed_url, json=embed_payload)
                 if embed_res.status_code == 200:
@@ -113,9 +124,7 @@ def api_chat(request):
                     similar_chunks = KnowledgeChunk.objects.annotate(distance=CosineDistance('embedding', query_vector)).order_by('distance')[:3]
                     rag_context = "\n---\n".join([c.text_content for c in similar_chunks])
 
-            # ----------------------------------------------------
-            # 🌟 2. 人格設定 & Function Callingの準備
-            # ----------------------------------------------------
+            # 人格設定 & ツール登録
             system_instruction = f"""
             あなたは「慎也」の分身です。論理的かつ情熱的、職人的トーンで回答してください。
             ワイズプロジェクト市原のプロであり、南インド料理の達人でもあります。
@@ -127,7 +136,6 @@ def api_chat(request):
             {rag_context}
             """
             
-            # 道具箱を登録
             tools = [search_inventory]
 
             model = genai.GenerativeModel(
@@ -136,7 +144,6 @@ def api_chat(request):
                 tools=tools
             )
             
-            # Function Callingを自動処理するチャットセッションを開始
             chat_session = model.start_chat(enable_automatic_function_calling=True)
             
             prompt_parts = []
@@ -144,23 +151,31 @@ def api_chat(request):
             if uploaded_file:
                 prompt_parts.append({"mime_type": uploaded_file.content_type, "data": uploaded_file.read()})
             
-           # 🌟 エラー回避のため stream=False に変更（在庫検索ツールを優先）
-            response = chat_session.send_message(prompt_parts, stream=False)
-            
-            def stream_generator():
-                try:
-                    # 分割せず、一気に回答を取得する
-                    full_text = response.text
-                    
-                    # 画面側の仕組み（SSE）を壊さないよう、同じ形式で一気に送信
-                    yield f"data: {json.dumps({'text': full_text})}\n\n"
-                    
-                    # ログの保存
-                    ChatLog.objects.create(user_message=user_message, ai_response=full_text, file_url=public_url)
-                except Exception as e:
-                    yield f"data: {json.dumps({'text': f'[AI生成エラー: {str(e)}]'})}\n\n"
+            # 🌟 AIへの送信とエラーデバッグ機能
+            try:
+                # stream=False で安全に送信
+                response = chat_session.send_message(prompt_parts, stream=False)
+                
+                def stream_generator():
+                    try:
+                        full_text = response.text
+                        yield f"data: {json.dumps({'text': full_text})}\n\n"
+                        ChatLog.objects.create(user_message=user_message, ai_response=full_text, file_url=public_url)
+                    except Exception as e:
+                        yield f"data: {json.dumps({'text': f'[AI生成エラー: {str(e)}]'})}\n\n"
 
-            return StreamingHttpResponse(stream_generator(), content_type='text/event-stream')
+                return StreamingHttpResponse(stream_generator(), content_type='text/event-stream')
+
+            except Exception as e:
+                # ツール実行などでエラーが起きた場合、画面に直接喋らせる
+                import traceback
+                print("=== AI通信/ツール実行エラー ===")
+                print(traceback.format_exc())
+                
+                def error_generator():
+                    yield f"data: {json.dumps({'text': f'【システムエラー】裏側の処理で失敗しました。原因: {str(e)}'})}\n\n"
+                    
+                return StreamingHttpResponse(error_generator(), content_type='text/event-stream')
             
         except Exception as e:
             return JsonResponse({"error": str(e)}, status=500)
